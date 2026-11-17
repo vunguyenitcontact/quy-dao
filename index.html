@@ -121,6 +121,37 @@ body{background:var(--space-deep);color:var(--ink);font-family:var(--f-body);fon
 .stats dd{margin:0;font-family:var(--f-display);font-weight:800;font-size:26px;line-height:1;font-variant-numeric:tabular-nums}
 #o-text{width:100%;box-sizing:border-box;min-height:120px;border-radius:12px;background:rgba(0,0,0,.3);color:var(--ink);border:1px solid var(--line);padding:10px;font:13px/1.4 var(--f-body);-webkit-user-select:text;user-select:text}
 
+/* Leaderboard */
+#over,#board{justify-content:flex-start}
+#over>.card,#board>.card{margin-block:auto}
+#board{background:rgba(8,9,31,.78);z-index:5}
+.field{display:flex;gap:8px}
+.field input{flex:1;min-width:0;box-sizing:border-box;border-radius:14px;border:1px solid var(--line);background:rgba(0,0,0,.3);color:var(--ink);font:600 16px var(--f-body);padding:12px 14px;-webkit-user-select:text;user-select:text}
+.field input::placeholder{color:var(--muted);font-weight:400}
+.field input:focus-visible{outline:3px solid var(--comet);outline-offset:2px}
+.btn.small{font-size:16px;padding:10px 16px 8px;white-space:nowrap}
+.rankbox{display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:14px;background:rgba(126,240,255,.08);border:1px solid rgba(126,240,255,.3)}
+.rankbox p{margin:0;font-size:14px;line-height:1.4}
+.rankbox p b{font-family:var(--f-display);font-size:20px;color:var(--comet)}
+.boardcard{max-height:100%;min-height:0}
+.board-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.board-head h2{margin:0;font-family:var(--f-display);font-weight:800;font-size:28px;line-height:1}
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:4px;border-radius:14px;background:rgba(0,0,0,.25)}
+.tabs button{appearance:none;border:0;border-radius:10px;background:none;color:var(--muted);font:700 14px var(--f-body);padding:9px 4px;cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--sun);color:var(--on-sun)}
+.tabs button:focus-visible{outline:3px solid var(--comet);outline-offset:2px}
+.board-sub{margin:0;font-size:13px;color:var(--muted);text-align:center}
+.rows{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px;flex:1 1 auto;min-height:0;overflow-y:auto}
+.rows li,.row-me{display:grid;grid-template-columns:34px 1fr auto;align-items:center;gap:10px;padding:8px 10px;border-radius:12px;background:rgba(255,255,255,.04)}
+.rows li.me,.row-me{background:rgba(126,240,255,.14);box-shadow:inset 0 0 0 1px rgba(126,240,255,.5)}
+.rk{font-family:var(--f-display);font-weight:800;font-size:17px;text-align:center;color:var(--muted);font-variant-numeric:tabular-nums}
+.rk.r1{color:var(--sun)}.rk.r2{color:#d7dbe8}.rk.r3{color:#e8a36b}
+.nm{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;text-align:left}
+.nm small{display:block;font-weight:400;font-size:11px;color:var(--muted)}
+.sc{font-family:var(--f-display);font-weight:800;font-size:20px;font-variant-numeric:tabular-nums}
+.board-state{margin:0;padding:18px 8px;text-align:center;color:var(--muted);font-size:14px;line-height:1.5}
+.board-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13px;color:var(--muted)}
+
 #toast{position:fixed;left:50%;bottom:calc(28px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);opacity:0;pointer-events:none;
   background:var(--ink);color:var(--on-sun);font-weight:700;font-size:14px;padding:10px 16px;border-radius:999px;transition:all .25s;max-width:calc(100% - 32px);text-align:center;box-sizing:border-box}
 #toast.show{opacity:1;transform:translate(-50%,0)}
@@ -151,7 +182,10 @@ body{background:var(--space-deep);color:var(--ink);font-family:var(--f-body);fon
     <div id="m-challenge" class="challenge" hidden></div>
     <button id="b-challenge" class="btn hot" hidden>Nhận thách đấu</button>
     <button id="b-daily" class="btn primary">Thử thách hôm nay<small id="m-left">còn 3/3 lượt</small></button>
-    <button id="b-free" class="btn">Chơi tự do<small>vô hạn lượt, bản đồ ngẫu nhiên</small></button>
+    <div class="row" id="m-row">
+      <button id="b-free" class="btn">Chơi tự do<small>bản đồ ngẫu nhiên</small></button>
+      <button id="b-board" class="btn" hidden>Xếp hạng<small id="m-rank">top hôm nay</small></button>
+    </div>
     <ul class="how">
       <li><b>Chạm</b>để rời quỹ đạo</li>
       <li><b>Bay</b>vào vùng hút hành tinh kế</li>
@@ -177,12 +211,43 @@ body{background:var(--space-deep);color:var(--ink);font-family:var(--f-body);fon
       <div><dt>Chuỗi đẹp nhất</dt><dd id="o-streak">0</dd></div>
       <div><dt>Kỷ lục</dt><dd id="o-best">0</dd></div>
     </dl>
+    <div class="rankbox" id="o-rankbox" hidden>
+      <p id="o-rankmsg"></p>
+      <form class="field" id="o-nameform" hidden>
+        <input id="name-input" type="text" maxlength="16" placeholder="Tên của bạn" autocomplete="nickname" autocapitalize="words" enterkeyhint="done" aria-label="Tên hiện trên bảng xếp hạng">
+        <button class="btn primary small" type="submit">Lên bảng</button>
+      </form>
+      <button class="link" id="b-board2" type="button">Xem bảng xếp hạng</button>
+    </div>
     <div class="row">
       <button id="b-retry" class="btn primary">Chơi lại<small id="o-left">Space</small></button>
       <button id="b-share" class="btn hot">Khoe điểm<small>thách bạn bè</small></button>
     </div>
     <textarea id="o-text" hidden readonly aria-label="Kết quả để chép"></textarea>
     <button class="link" id="b-menu">Về màn hình chính</button>
+  </div>
+</div>
+
+<div id="board" class="overlay" hidden>
+  <div class="card boardcard" role="dialog" aria-labelledby="bd-title">
+    <div class="board-head">
+      <h2 id="bd-title">Bảng xếp hạng</h2>
+      <button class="icon-btn" id="b-board-close" type="button" aria-label="Đóng bảng xếp hạng"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+    <div class="tabs" role="tablist">
+      <button role="tab" type="button" data-tab="today" aria-selected="true">Hôm nay</button>
+      <button role="tab" type="button" data-tab="yday" aria-selected="false">Hôm qua</button>
+      <button role="tab" type="button" data-tab="all" aria-selected="false">Kỷ lục</button>
+    </div>
+    <p class="board-sub" id="bd-sub"></p>
+    <ol class="rows" id="bd-rows"></ol>
+    <div class="row-me" id="bd-me" hidden></div>
+    <p class="board-state" id="bd-state" hidden></p>
+    <div class="board-foot"><span id="bd-name"></span><button class="link" id="b-rename" type="button">Đổi tên</button></div>
+    <form class="field" id="bd-nameform" hidden>
+      <input id="rename-input" type="text" maxlength="16" placeholder="Tên của bạn" autocomplete="nickname" autocapitalize="words" enterkeyhint="done" aria-label="Tên hiện trên bảng xếp hạng">
+      <button class="btn primary small" type="submit">Lưu</button>
+    </form>
   </div>
 </div>
 
@@ -194,6 +259,10 @@ body{background:var(--space-deep);color:var(--ink);font-family:var(--f-body);fon
 'use strict';
 // Điền link chia sẻ công khai của game vào đây (để trống thì không chèn link)
 const SHARE_URL = 'https://vunguyenitcontact.github.io/quy-dao/';
+// Bảng xếp hạng (Supabase). Để trống cả hai thì game ẩn hẳn bảng xếp hạng.
+// SB_KEY là khoá CÔNG KHAI (anon / publishable), an toàn khi nằm trong mã nguồn: bảng điểm đã khoá, chỉ gọi được 3 hàm.
+const SB_URL = 'https://nomxgglbwziexlploehg.supabase.co';
+const SB_KEY = 'sb_publishable_TkAF_1FVW0_ifsMtYrrv-g_I7uRRgyk';
 // Cầu nối tới app iPhone (chỉ có khi chạy trong app): rung và bảng chia sẻ của máy
 const NATIVE = (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.qd) || null;
 const DAILY_TRIES = 3;
@@ -708,6 +777,7 @@ function refreshMenu() {
     $('m-challenge').hidden = false; $('b-challenge').hidden = false;
     $('m-challenge').innerHTML = `Một người bạn vừa đạt <b>${challenge.score}</b> điểm trên bản đồ ngày ${fmtDate(challenge.date)}. Bạn có vượt mặt được không?`;
   } else { $('m-challenge').hidden = true; $('b-challenge').hidden = true; }
+  if (LB_ON) menuRank();
 }
 function untilMidnight() {
   const n = new Date(), t = new Date(n.getFullYear(), n.getMonth(), n.getDate() + 1);
@@ -755,7 +825,7 @@ function onGameOver(g) {
   let best, isNew = false;
   if (mode === 'daily') {
     const d = getDaily(); d.runs.push(g.score);
-    if (g.score > d.best) { d.best = g.score; isNew = d.runs.length > 1; }
+    if (g.score > d.best || d.bestPlanets == null) { isNew = g.score > d.best && d.runs.length > 1; d.best = Math.max(d.best, g.score); d.bestPlanets = g.maxIdx; d.bestStreak = g.bestStreak; }
     saveDaily(d); best = d.best;
   } else if (mode === 'free') {
     const fb = store.get('qd-best', 0);
@@ -799,6 +869,7 @@ function onGameOver(g) {
   $('hud').hidden = true;
   $('over').hidden = false;
   retry.focus({ preventScroll: true });
+  showRankBox(g);
 }
 function gridCells(grid) { return grid.length <= 40 ? grid.slice() : grid.slice(0, 38).concat('…', grid[grid.length - 1]); }
 
@@ -807,6 +878,7 @@ function shareText(g) {
   const cells = gridCells(g.grid), rows = [];
   for (let i = 0; i < cells.length; i += 10) rows.push(cells.slice(i, i + 10).join(''));
   const lines = [head, `🪐 ${g.maxIdx} hành tinh · Vùng ${zoneOf(g.maxIdx) + 1} (${zoneName(g.maxIdx)}) · 🔥 chuỗi ${g.bestStreak}`, ...rows, `Danh hiệu: ${rankOf(g.score)}`];
+  if (g.rank) lines.splice(2, 0, `🏆 Hạng ${g.rank}/${g.rankTotal} hôm nay`);
   if (mode === 'free') { if (SHARE_URL) lines.push(`Chơi thử 👉 ${SHARE_URL}`); }
   else if (SHARE_URL) lines.push(`Vượt mặt mình đi 👉 ${SHARE_URL}#vs-${g.score}-${g.date}`);
   else lines.push(`Mã thách đấu: vs-${g.score}-${g.date}`);
@@ -836,9 +908,145 @@ const ICON_OFF = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
 function renderMute() { $('b-mute2').innerHTML = muted ? ICON_OFF : ICON_ON; $('b-mute').textContent = 'Âm thanh: ' + (muted ? 'tắt' : 'bật'); }
 function toggleMute() { muted = !muted; store.set('qd-mute', muted); renderMute(); if (!muted) audio(); }
 
+/* ---------- leaderboard ---------- */
+// Khi game bị nhúng trong khung của trang khác (ví dụ bản xem trên claude.ai) thì khung đó chặn kết nối ra ngoài → tắt bảng xếp hạng ở đó
+let IS_TOP = false; try { IS_TOP = window.top === window.self; } catch (e) {}
+const LB_ON = !!(SB_URL && SB_KEY) && IS_TOP;
+function rpc(fn, args) {
+  const ctl = typeof AbortController === 'function' ? new AbortController() : null;
+  const timer = setTimeout(() => ctl && ctl.abort(), 9000);
+  return fetch(`${SB_URL}/rest/v1/rpc/${fn}`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json', apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY },
+    body: JSON.stringify(args), signal: ctl ? ctl.signal : undefined
+  }).then(r => r.json().catch(() => null).then(j => {
+    if (!r.ok) { const e = new Error((j && j.message) || 'Máy chủ báo lỗi'); e.server = r.status >= 400 && r.status < 500; throw e; }
+    return j;
+  })).finally(() => clearTimeout(timer));
+}
+// Mã người chơi: sinh ngẫu nhiên một lần trên máy này, không gắn với thông tin cá nhân nào
+function playerId() {
+  let id = store.get('qd-pid', '');
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(id)) {
+    id = (window.crypto && crypto.randomUUID) ? crypto.randomUUID()
+      : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => { const r = Math.random() * 16 | 0; return (c === 'x' ? r : (r & 3 | 8)).toString(16); });
+    store.set('qd-pid', id);
+  }
+  return id;
+}
+const cleanName = s => String(s || '').replace(/[\u0000-\u001f<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, 16);
+const getName = () => cleanName(store.get('qd-name', ''));
+const ydayOf = () => { const n = new Date(); return ymd(new Date(n.getFullYear(), n.getMonth(), n.getDate() - 1)); };
+function linkBtn(label, fn) { const b = document.createElement('button'); b.type = 'button'; b.className = 'link'; b.textContent = label; b.addEventListener('click', fn); return b; }
+
+let lastRank = null;   // hạng hôm nay mới nhất mà máy chủ trả về: {rank, total}
+// Gửi điểm cao nhất trong ngày của máy này (máy chủ cũng chỉ giữ điểm cao nhất)
+function submitBest(g) {
+  const d = getDaily();
+  const useRun = g && (d.bestPlanets == null || g.score >= d.best);
+  const score = useRun ? g.score : d.best, planets = useRun ? g.maxIdx : d.bestPlanets, streak = useRun ? g.bestStreak : (d.bestStreak || 0);
+  return rpc('submit_score', { p_day: TODAY, p_player: playerId(), p_name: getName(), p_score: score, p_planets: planets, p_streak: streak })
+    .then(b => { if (b && b.me) lastRank = { rank: Number(b.me.rank), total: Number(b.total) }; return b; });
+}
+function showRankBox(g) {
+  const box = $('o-rankbox'), form = $('o-nameform');
+  if (!LB_ON || mode !== 'daily') { box.hidden = true; return; }
+  box.hidden = false;
+  if (!getName()) { form.hidden = false; $('o-rankmsg').textContent = 'Nhập tên để ghi điểm lên bảng xếp hạng hôm nay.'; return; }
+  form.hidden = true;
+  sendRun(g);
+}
+function sendRun(g) {
+  const msg = $('o-rankmsg');
+  msg.textContent = 'Đang gửi điểm lên bảng xếp hạng…';
+  submitBest(g).then(b => {
+    if (game !== g) return;                     // người chơi đã sang ván khác
+    if (!b || !b.me) { msg.textContent = 'Đã gửi điểm.'; return; }
+    g.rank = Number(b.me.rank); g.rankTotal = Number(b.total);
+    msg.innerHTML = `Hạng <b>#${g.rank}</b> trong ${g.rankTotal} người chơi hôm nay` + (Number(b.me.score) > g.score ? ` (điểm tốt nhất của bạn: ${Number(b.me.score)})` : '');
+  }).catch(err => {
+    if (game !== g) return;
+    msg.textContent = (err && err.server ? err.message + '. ' : 'Không gửi được điểm, kiểm tra mạng nhé. ');
+    msg.append(linkBtn('Thử lại', () => sendRun(g)));
+  });
+}
+
+let boardOpen = false, boardTab = 'today', boardReq = 0;
+function openBoard(tab) {
+  boardOpen = true; $('board').hidden = false; $('bd-nameform').hidden = true;
+  boardFoot(); setTab(tab || 'today');
+  $('b-board-close').focus({ preventScroll: true });
+}
+function closeBoard() { boardOpen = false; $('board').hidden = true; }
+function boardFoot() { const n = getName(); $('bd-name').textContent = n ? `Tên của bạn: ${n}` : 'Bạn chưa đặt tên'; $('b-rename').textContent = n ? 'Đổi tên' : 'Đặt tên'; }
+function setTab(tab) {
+  boardTab = tab;
+  for (const b of document.querySelectorAll('#board [role=tab]')) b.setAttribute('aria-selected', b.dataset.tab === tab ? 'true' : 'false');
+  loadBoard();
+}
+function rowEl(tag, r, isMe) {
+  const el = document.createElement(tag);
+  if (isMe) el.classList.add('me');
+  const rk = document.createElement('span'); rk.className = 'rk' + (r.rank <= 3 ? ' r' + r.rank : ''); rk.textContent = r.rank;
+  const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = r.name + (isMe ? ' (bạn)' : '');   // textContent: tên do người chơi nhập
+  const sm = document.createElement('small'); sm.textContent = `${Number(r.planets)} hành tinh` + (r.day ? ` · ngày ${fmtDate(Number(r.day))}` : ''); nm.append(sm);
+  const sc = document.createElement('span'); sc.className = 'sc'; sc.textContent = Number(r.score);
+  el.append(rk, nm, sc);
+  return el;
+}
+function loadBoard() {
+  const req = ++boardReq, rows = $('bd-rows'), st = $('bd-state'), me = $('bd-me'), sub = $('bd-sub');
+  const head = boardTab === 'today' ? `Bản đồ ngày #${dayNo(TODAY)} · ${fmtDate(TODAY)}` : boardTab === 'yday' ? `Kết quả chung cuộc ngày ${fmtDate(ydayOf())}` : 'Điểm cao nhất của mỗi người từ trước tới nay';
+  rows.textContent = ''; me.hidden = true; st.hidden = false; st.textContent = 'Đang tải…'; sub.textContent = head;
+  const p = boardTab === 'all' ? rpc('hall_of_fame', { p_player: playerId(), p_limit: 20 })
+    : rpc('leaderboard', { p_day: boardTab === 'today' ? TODAY : ydayOf(), p_player: playerId(), p_limit: 20 });
+  p.then(b => {
+    if (req !== boardReq) return;
+    const top = (b && b.top) || [];
+    if (boardTab === 'today' && b && b.me) { lastRank = { rank: Number(b.me.rank), total: Number(b.total) }; menuRank(); }
+    if (!top.length) { st.textContent = boardTab === 'today' ? 'Chưa ai lên bảng hôm nay. Chơi Thử thách hôm nay để là người đầu tiên.' : 'Chưa có điểm nào ở đây.'; return; }
+    st.hidden = true;
+    sub.textContent = `${head} · ${Number(b.total)} người chơi`;
+    for (const r of top) rows.append(rowEl('li', r, !!r.me));
+    if (b.me && !top.some(r => r.me)) { me.replaceChildren(...rowEl('div', b.me, true).childNodes); me.hidden = false; }
+  }).catch(() => {
+    if (req !== boardReq) return;
+    st.hidden = false; st.textContent = 'Không tải được bảng xếp hạng. ';
+    st.append(linkBtn('Thử lại', loadBoard));
+  });
+}
+function menuRank() { $('m-rank').textContent = lastRank ? `hạng #${lastRank.rank}/${lastRank.total}` : 'top hôm nay'; }
+function saveName(input) {
+  const n = cleanName(input.value);
+  if (n.length < 2) { toast('Tên cần ít nhất 2 ký tự'); input.focus(); return false; }
+  store.set('qd-name', n); input.blur();
+  return true;
+}
+if (LB_ON) {
+  $('b-board').hidden = false;
+  $('b-board').addEventListener('click', () => openBoard('today'));
+  $('b-board2').addEventListener('click', () => openBoard('today'));
+  $('b-board-close').addEventListener('click', closeBoard);
+  $('board').addEventListener('click', e => { if (e.target === $('board')) closeBoard(); });
+  for (const b of document.querySelectorAll('#board [role=tab]')) b.addEventListener('click', () => setTab(b.dataset.tab));
+  $('o-nameform').addEventListener('submit', e => { e.preventDefault(); if (saveName($('name-input'))) { $('o-nameform').hidden = true; if (game) sendRun(game); } });
+  $('b-rename').addEventListener('click', () => { const f = $('bd-nameform'); f.hidden = !f.hidden; if (!f.hidden) { $('rename-input').value = getName(); $('rename-input').focus(); } });
+  $('bd-nameform').addEventListener('submit', e => {
+    e.preventDefault();
+    if (!saveName($('rename-input'))) return;
+    $('bd-nameform').hidden = true; boardFoot();
+    const d = getDaily();
+    // đã có điểm hôm nay thì gửi lại để tên mới hiện trên bảng
+    if (d.runs.length && d.bestPlanets != null) submitBest(null).then(() => { if (boardOpen) loadBoard(); if (state === 'over' && game && mode === 'daily') showRankBox(game); }).catch(() => toast('Đã lưu tên, nhưng chưa cập nhật được lên bảng'));
+    else toast('Đã lưu tên');
+  });
+} else $('m-row').style.gridTemplateColumns = '1fr';
+
 /* ---------- input ---------- */
 cv.addEventListener('pointerdown', e => { e.preventDefault(); if (state === 'play' && game) { audio(); launch(game); } });
 window.addEventListener('keydown', e => {
+  const tg = e.target && e.target.tagName;
+  if (tg === 'INPUT' || tg === 'TEXTAREA') return;            // đang gõ tên thì không điều khiển game
+  if (boardOpen) { if (e.code === 'Escape') closeBoard(); return; }
   if (e.code === 'Space' || e.code === 'Enter' || e.code === 'ArrowUp') {
     if (state === 'play' && game) { e.preventDefault(); audio(); launch(game); }
     else if (state === 'over' && e.code === 'Space') { e.preventDefault(); $('b-retry').click(); }
