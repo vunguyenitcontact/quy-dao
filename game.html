@@ -1,0 +1,870 @@
+<title>Quỹ Đạo</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Chạm đúng lúc để phóng sao chổi qua từng hành tinh. Mỗi ngày một bản đồ, ai cũng chơi cùng một bản đồ.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Be+Vietnam+Pro:wght@400;600;700&display=swap">
+<style>
+/* Layout: full-bleed canvas universe; HUD floats on top; menu = logo up top + control card at the bottom; result = centered card. Single deliberate night-sky look. */
+:root{
+  --space:#141243;
+  --space-deep:#08091f;
+  --ink:#f6f1ff;
+  --muted:#aaa4dc;
+  --comet:#7ef0ff;
+  --flare:#ff8fb1;
+  --sun:#ffd66b;
+  --sun-deep:#d99a2b;
+  --card:rgba(18,16,58,.74);
+  --line:rgba(190,180,255,.2);
+  --on-sun:#22154a;
+  --f-display:'Baloo 2', 'Arial Rounded MT Bold', system-ui, sans-serif;
+  --f-body:'Be Vietnam Pro', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  color-scheme:dark;
+}
+[hidden]{display:none!important}
+html,body{height:100%;margin:0;overflow:hidden}
+body{background:var(--space-deep);color:var(--ink);font-family:var(--f-body);font-size:15px;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+#cv{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:pointer}
+
+/* HUD */
+#hud{position:fixed;inset:0 0 auto;display:grid;grid-template-columns:1fr auto 1fr;align-items:start;gap:8px;
+  padding-top:calc(14px + env(safe-area-inset-top,0px));
+  padding-left:max(16px, env(safe-area-inset-left,0px));padding-right:max(16px, env(safe-area-inset-right,0px));pointer-events:none}
+.hud-l{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);line-height:1.5}
+.hud-l b{color:var(--ink);font-weight:700}
+.hud-c{text-align:center}
+#score{font-family:var(--f-display);font-weight:800;font-size:56px;line-height:.9;font-variant-numeric:tabular-nums;text-shadow:0 0 24px rgba(126,240,255,.45)}
+#combo{font-family:var(--f-display);font-weight:800;font-size:15px;color:var(--sun);letter-spacing:.08em;min-height:20px;transition:transform .15s}
+#combo.bump{transform:scale(1.25)}
+.hud-r{display:flex;justify-content:flex-end}
+.icon-btn{pointer-events:auto;width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:rgba(18,16,58,.5);color:var(--ink);display:grid;place-items:center;cursor:pointer}
+.icon-btn svg{width:20px;height:20px}
+
+/* Overlays */
+.overlay{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;overflow-y:auto;
+  padding-left:max(16px, env(safe-area-inset-left,0px));padding-right:max(16px, env(safe-area-inset-right,0px));
+  padding-block:calc(20px + env(safe-area-inset-top,0px)) calc(20px + env(safe-area-inset-bottom,0px))}
+#menu{justify-content:space-between;gap:20px;background:linear-gradient(180deg,rgba(8,9,31,0) 40%,rgba(8,9,31,.7) 100%)}
+#over{justify-content:center;background:rgba(8,9,31,.55)}
+.card{width:100%;max-width:420px;box-sizing:border-box;padding:22px;border-radius:24px;background:var(--card);border:1px solid var(--line);
+  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);display:flex;flex-direction:column;gap:14px;box-shadow:0 20px 60px rgba(0,0,0,.35)}
+
+.logo-wrap{text-align:center;margin-top:6vh}
+.logo{font-family:var(--f-display);font-weight:800;font-size:clamp(64px,19vw,104px);line-height:.85;margin:0;letter-spacing:-.01em;
+  text-shadow:0 0 40px rgba(126,240,255,.35),0 4px 0 rgba(0,0,0,.25);text-wrap:balance}
+.logo span{color:var(--sun)}
+.tag{margin:12px auto 0;max-width:30ch;color:var(--muted);font-size:15px;line-height:1.5}
+.eyebrow{margin:0;font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--comet)}
+
+.btn{appearance:none;border:0;cursor:pointer;font-family:var(--f-display);font-weight:800;font-size:20px;line-height:1.1;border-radius:16px;padding:14px 18px 12px;
+  color:var(--ink);background:rgba(255,255,255,.06);box-shadow:inset 0 0 0 1px var(--line);display:flex;flex-direction:column;align-items:center;gap:2px;transition:transform .08s}
+.btn small{font-family:var(--f-body);font-weight:600;font-size:12px;opacity:.75;letter-spacing:.02em}
+.btn:active{transform:translateY(2px)}
+.btn.primary{background:var(--sun);color:var(--on-sun);box-shadow:0 4px 0 var(--sun-deep)}
+.btn.primary:active{box-shadow:0 2px 0 var(--sun-deep)}
+.btn.hot{background:var(--flare);color:var(--on-sun);box-shadow:0 4px 0 #c45c80}
+.btn.hot:active{box-shadow:0 2px 0 #c45c80}
+.btn[disabled]{opacity:.45;cursor:not-allowed;transform:none}
+.btn:focus-visible,.icon-btn:focus-visible,.link:focus-visible{outline:3px solid var(--comet);outline-offset:3px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.link{appearance:none;background:none;border:0;color:var(--muted);font:inherit;font-size:14px;cursor:pointer;text-decoration:underline;text-underline-offset:3px;padding:4px;align-self:center}
+
+.how{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.how li{font-size:12px;line-height:1.35;color:var(--muted);text-align:center;padding:10px 6px;border-radius:12px;background:rgba(255,255,255,.04)}
+.how b{display:block;font-family:var(--f-display);font-size:16px;color:var(--ink);margin-bottom:2px}
+.best{margin:0;text-align:center;font-size:13px;color:var(--muted)}
+.best b{color:var(--sun)}
+
+.challenge{border-radius:16px;padding:12px 14px;background:linear-gradient(135deg,rgba(255,143,177,.22),rgba(255,214,107,.16));border:1px solid rgba(255,143,177,.45);font-size:14px;line-height:1.45}
+.challenge b{font-family:var(--f-display);font-size:22px;color:var(--sun)}
+
+/* Result */
+.result{text-align:center;align-items:stretch}
+.big{display:flex;align-items:baseline;justify-content:center;gap:8px}
+#o-score{font-family:var(--f-display);font-weight:800;font-size:88px;line-height:.85;font-variant-numeric:tabular-nums;text-shadow:0 0 30px rgba(255,214,107,.4)}
+.big small{font-family:var(--f-display);font-size:20px;color:var(--muted)}
+.badge{align-self:center;font-family:var(--f-display);font-weight:800;font-size:13px;letter-spacing:.1em;color:var(--on-sun);background:var(--comet);padding:3px 10px 1px;border-radius:999px}
+.rank{margin:0;font-family:var(--f-display);font-weight:800;font-size:24px;color:var(--sun);line-height:1.1}
+.reason{margin:0;color:var(--muted);font-size:14px}
+.vs{margin:0;font-weight:700;font-size:15px;padding:8px 10px;border-radius:12px}
+.vs.win{background:rgba(126,240,255,.14);color:var(--comet)}
+.vs.lose{background:rgba(255,143,177,.14);color:var(--flare)}
+.note{margin:0;font-size:14px;line-height:1.45;padding:10px 12px;border-radius:12px;background:rgba(255,214,107,.12);border:1px solid rgba(255,214,107,.4);color:var(--ink)}
+.note b{color:var(--sun)}
+.grid{display:grid;grid-template-columns:repeat(10,1fr);gap:3px;font-size:18px;line-height:1.25;padding:10px;border-radius:14px;background:rgba(0,0,0,.22)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0}
+.stats div{display:flex;flex-direction:column-reverse;gap:2px}
+.stats dt{font-size:11px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.stats dd{margin:0;font-family:var(--f-display);font-weight:800;font-size:26px;line-height:1;font-variant-numeric:tabular-nums}
+#o-text{width:100%;box-sizing:border-box;min-height:120px;border-radius:12px;background:rgba(0,0,0,.3);color:var(--ink);border:1px solid var(--line);padding:10px;font:13px/1.4 var(--f-body);-webkit-user-select:text;user-select:text}
+
+#toast{position:fixed;left:50%;bottom:calc(28px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);opacity:0;pointer-events:none;
+  background:var(--ink);color:var(--on-sun);font-weight:700;font-size:14px;padding:10px 16px;border-radius:999px;transition:all .25s;max-width:calc(100% - 32px);text-align:center;box-sizing:border-box}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+#banner{position:fixed;left:0;right:0;top:38%;text-align:center;pointer-events:none;font-family:var(--f-display);font-weight:800;font-size:clamp(28px,9vw,48px);color:var(--sun);
+  text-shadow:0 0 30px rgba(255,214,107,.6);opacity:0;transform:scale(.6);transition:all .3s cubic-bezier(.2,1.6,.4,1)}
+#banner.show{opacity:1;transform:scale(1)}
+@media (prefers-reduced-motion: reduce){ .btn,#toast,#banner,#combo{transition:none} }
+@media (max-height:640px){ .logo-wrap{margin-top:0} .how{display:none} #o-score{font-size:64px} }
+</style>
+
+<canvas id="cv" aria-label="Màn chơi Quỹ Đạo: chạm để phóng sao chổi"></canvas>
+
+<div id="hud" hidden>
+  <div class="hud-l"><div id="h-mode"><b>Ngày #1</b></div><div id="h-sub"></div></div>
+  <div class="hud-c"><div id="score">0</div><div id="combo"></div></div>
+  <div class="hud-r"><button class="icon-btn" id="b-mute2" aria-label="Tắt/bật âm thanh"></button></div>
+</div>
+
+<div id="menu" class="overlay">
+  <div class="logo-wrap">
+    <p class="eyebrow" id="m-day">Ngày #1</p>
+    <h1 class="logo">Quỹ<br><span>Đạo</span></h1>
+    <p class="tag">Chạm đúng lúc để phóng sao chổi qua từng hành tinh. Mỗi ngày một bản đồ mới, ai cũng chơi chung một bản đồ.</p>
+  </div>
+  <div class="card">
+    <div id="m-challenge" class="challenge" hidden></div>
+    <button id="b-challenge" class="btn hot" hidden>Nhận thách đấu</button>
+    <button id="b-daily" class="btn primary">Thử thách hôm nay<small id="m-left">còn 3/3 lượt</small></button>
+    <button id="b-free" class="btn">Chơi tự do<small>vô hạn lượt, bản đồ ngẫu nhiên</small></button>
+    <ul class="how">
+      <li><b>Chạm</b>để rời quỹ đạo</li>
+      <li><b>Bay</b>vào vùng hút hành tinh kế</li>
+      <li><b>Canh giờ</b>phóng trước khi vòng đếm hết</li>
+    </ul>
+    <p class="best" id="m-best"></p>
+    <button class="link" id="b-mute">Âm thanh: bật</button>
+  </div>
+</div>
+
+<div id="over" class="overlay" hidden>
+  <div class="card result">
+    <p class="eyebrow" id="o-ctx">Ngày #1</p>
+    <span class="badge" id="o-new" hidden>KỶ LỤC MỚI</span>
+    <div class="big"><span id="o-score">0</span><small>điểm</small></div>
+    <p class="rank" id="o-rank"></p>
+    <p class="reason" id="o-reason"></p>
+    <p class="vs" id="o-vs" hidden></p>
+    <p class="note" id="o-note" hidden></p>
+    <div class="grid" id="o-grid" aria-label="Lịch sử từng cú nhảy"></div>
+    <dl class="stats">
+      <div><dt>Hành tinh</dt><dd id="o-planets">0</dd></div>
+      <div><dt>Chuỗi đẹp nhất</dt><dd id="o-streak">0</dd></div>
+      <div><dt>Kỷ lục</dt><dd id="o-best">0</dd></div>
+    </dl>
+    <div class="row">
+      <button id="b-retry" class="btn primary">Chơi lại<small id="o-left">Space</small></button>
+      <button id="b-share" class="btn hot">Khoe điểm<small>thách bạn bè</small></button>
+    </div>
+    <textarea id="o-text" hidden readonly aria-label="Kết quả để chép"></textarea>
+    <button class="link" id="b-menu">Về màn hình chính</button>
+  </div>
+</div>
+
+<div id="banner">VƯỢT MẶT BẠN BÈ!</div>
+<div id="toast" role="status"></div>
+
+<script>
+(() => {
+'use strict';
+// Điền link chia sẻ công khai của game vào đây (để trống thì không chèn link)
+const SHARE_URL = 'https://vunguyenitcontact.github.io/quy-dao/';
+// Cầu nối tới app iPhone (chỉ có khi chạy trong app): rung và bảng chia sẻ của máy
+const NATIVE = (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.qd) || null;
+const DAILY_TRIES = 3;
+
+const $ = id => document.getElementById(id);
+const cv = $('cv'), ctx = cv.getContext('2d');
+const W = 400;                       // world width in units
+let dpr = 1, scale = 1, offX = 0, cssW = 0, cssH = 0, viewH = 0;
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const lerp = (a, b, t) => a + (b - a) * t;
+const TAU = Math.PI * 2;
+
+// localStorage có thể bị chặn (ẩn danh, khung xem bị khóa) → luôn giữ bản sao trong bộ nhớ để lượt chơi vẫn được đếm
+const mem = {};
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); if (v != null) return JSON.parse(v); } catch (e) {} return k in mem ? mem[k] : d; },
+  set(k, v) { mem[k] = v; try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+};
+
+/* ---------- dates & seeds ---------- */
+const ymd = d => d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+const TODAY = ymd(new Date());
+const dayNo = n => Math.round((Date.UTC(Math.floor(n / 10000), Math.floor(n / 100) % 100 - 1, n % 100) - Date.UTC(2026, 0, 1)) / 864e5) + 1;
+const fmtDate = n => (n % 100) + '/' + (Math.floor(n / 100) % 100);
+const seedOf = n => (Math.imul(n, 2654435761) ^ 0x5bd1e995) >>> 0;
+const randSeed = () => (Math.random() * 4294967296) >>> 0;
+function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+
+/* ---------- audio ---------- */
+let ac = null, master = null, nbuf = null;
+let muted = store.get('qd-mute', false);
+function audio() {
+  if (!ac) { try { ac = new (window.AudioContext || window.webkitAudioContext)(); master = ac.createGain(); master.gain.value = 0.55; master.connect(ac.destination); } catch (e) { ac = null; } }
+  if (ac && ac.state === 'suspended') ac.resume();
+}
+function tone(f, dur, type = 'sine', vol = 0.2, slide = 0, delay = 0) {
+  if (!ac || muted) return;
+  const t = ac.currentTime + delay, o = ac.createOscillator(), g = ac.createGain();
+  o.type = type; o.frequency.setValueAtTime(f, t);
+  if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(30, f * slide), t + dur);
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.012); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g).connect(master); o.start(t); o.stop(t + dur + 0.03);
+}
+function noise(dur, vol, f0, f1, type = 'bandpass') {
+  if (!ac || muted) return;
+  if (!nbuf) { nbuf = ac.createBuffer(1, ac.sampleRate, ac.sampleRate); const d = nbuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; }
+  const t = ac.currentTime, s = ac.createBufferSource(), fl = ac.createBiquadFilter(), g = ac.createGain();
+  s.buffer = nbuf; fl.type = type; fl.Q.value = 1.2;
+  fl.frequency.setValueAtTime(f0, t); fl.frequency.exponentialRampToValueAtTime(f1, t + dur);
+  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  s.connect(fl).connect(g).connect(master); s.start(t); s.stop(t + dur + 0.02);
+}
+const NOTES = [523.25, 587.33, 659.25, 783.99, 880, 1046.5, 1174.66, 1318.51, 1567.98, 1760, 2093];
+const sfx = {
+  launch() { noise(0.16, 0.14, 700, 2600); tone(240, 0.14, 'sine', 0.07, 2.2); },
+  catchQ(q, streak) {
+    if (q === 2) { const n = NOTES[Math.min(streak - 1, NOTES.length - 1)]; tone(n, 0.4, 'triangle', 0.2); tone(n * 1.5, 0.3, 'sine', 0.07, 0, 0.05); }
+    else if (q === 1) tone(392, 0.28, 'triangle', 0.16);
+    else { tone(330, 0.22, 'triangle', 0.14); tone(311, 0.2, 'sine', 0.06, 0, 0.06); }
+  },
+  skip() { [0, 0.07, 0.14].forEach((d, i) => tone(NOTES[4 + i * 2], 0.25, 'triangle', 0.14, 0, d)); },
+  worm() { tone(260, 0.55, 'sine', 0.16, 6); tone(520, 0.5, 'triangle', 0.08, 3, 0.06); noise(0.4, 0.1, 400, 3000); },
+  tick() { tone(1500, 0.04, 'square', 0.035); },
+  die() { tone(170, 0.7, 'sawtooth', 0.11, 0.25); noise(0.55, 0.35, 900, 120, 'lowpass'); },
+  win() { [0, 0.1, 0.2, 0.32].forEach((d, i) => tone(NOTES[3 + i * 2], 0.4, 'triangle', 0.15, 0, d)); }
+};
+function buzz(p) {
+  if (NATIVE) { try { NATIVE.postMessage({ type: 'haptic', kind: Array.isArray(p) ? (p[0] >= 30 ? 'die' : 'perfect') : 'tap' }); } catch (e) {} return; }
+  try { navigator.vibrate && navigator.vibrate(p); } catch (e) {}
+}
+
+/* ---------- world generation ---------- */
+const PALS = [
+  ['#ffd0b0', '#f07f6a', '#7a2e4a'], ['#c8ffe4', '#4fcfaa', '#1b5e63'], ['#e3d6ff', '#9b7bff', '#3b2391'],
+  ['#fff1b8', '#ffc24b', '#9a4f13'], ['#c9ecff', '#58a8ff', '#1d3b8f'], ['#ffd2ea', '#ff7cbc', '#7d1f5b']
+];
+function makePlanet(R, x, y, r, cap, w, life, amp, f, ph) {
+  const craters = [];
+  for (let i = 0; i < 3; i++) craters.push({ a: R() * TAU, dd: R() * 0.55, s: 0.12 + R() * 0.16 });
+  return { bx: x, x, y, r, cap, w, life, amp, f, ph, kind: 'normal', pal: PALS[Math.floor(R() * PALS.length)], ring: R() < 0.28, tilt: R() * 0.6 - 0.3, craters };
+}
+const HOT = ['#fff0c2', '#ff7a3d', '#8f1d1d'];
+const ZONES = ['Vùng yên bình', 'Vành đai nóng', 'Xoáy ngân hà', 'Rìa hố đen', 'Cõi vô cực'];
+const ZTINT = ['', 'rgba(255,96,40,0.13)', 'rgba(40,200,255,0.12)', 'rgba(160,50,255,0.17)', 'rgba(255,40,120,0.17)'];
+const zoneOf = i => Math.floor(i / 10);
+const zoneName = i => ZONES[Math.min(ZONES.length - 1, zoneOf(i))];
+function genPlanet(g, i) {
+  const R = g.rng;
+  if (i === 0) return makePlanet(R, 200, 0, 36, 92, 2.3, 12, 0, 0, 0);
+  const prev = g.planets[i - 1], d = Math.min(1, (i - 1) / 40);
+  let r = lerp(32, 17, d) + R() * 7;
+  let gap = lerp(44, 26, d) + R() * 7;
+  let w = lerp(2.3, 3.6, d) + R() * 0.45;
+  let life = lerp(12, 5, d);              // số giây được bay quanh hành tinh: 12s lúc đầu, giảm dần, không dưới 5s
+  const roll = R();
+  let kind = 'normal';
+  if (i >= 10 && roll < lerp(0.16, 0.3, d)) { kind = 'hot'; w *= 1.2; life = Math.max(3.5, life * 0.6); }
+  else if (i >= 4 && roll > 0.9) { kind = 'giant'; r = 44 + R() * 8; gap = 40; w *= 0.72; }
+  const cap = r + gap;
+  const y = prev.y - (lerp(185, 255, d) + R() * 45) - (kind === 'giant' ? 30 : 0);
+  let amp = 0, f = 0, ph = 0;
+  if (i > 5 && kind !== 'giant' && R() < lerp(0.15, 0.65, d)) { amp = lerp(22, 56, d) * (0.6 + R() * 0.4); f = 0.2 + R() * lerp(0.2, 0.3, d); ph = R() * TAU; }
+  const lo = 30 + cap * 0.5 + amp, hi = W - lo;
+  let x, tries = 0;
+  do { x = lo + R() * (hi - lo); tries++; } while (Math.abs(x - prev.bx) < 60 && tries < 6);
+  const P = makePlanet(R, x, y, r, cap, w, life, amp, f, ph);
+  P.kind = kind;
+  if (kind === 'hot') { P.pal = HOT; P.ring = false; }
+  // lỗ sâu: mục tiêu nhỏ nằm lệch đường giữa hành tinh trước và hành tinh này, trúng thì nhảy 3 hành tinh
+  if (i >= 5 && i - g.lastWorm >= 5 && R() < 0.24) {
+    const wx = P.bx > W / 2 ? 45 + R() * 70 : W - 45 - R() * 70;
+    const wy = (prev.y + P.y) / 2 + (R() - 0.5) * 40, wr = 20;
+    if (Math.hypot(wx - P.bx, wy - P.y) > P.cap + P.amp + wr + 18 && Math.hypot(wx - prev.bx, wy - prev.y) > prev.cap + prev.amp + wr + 18) {
+      g.worms.push({ x: wx, y: wy, r: wr, from: i - 1, dest: i + 2, used: false });
+      g.lastWorm = i;
+    }
+  }
+  return P;
+}
+function ensure(g, upto) { while (g.planets.length <= upto) g.planets.push(genPlanet(g, g.planets.length)); }
+
+function newRun(seed, opts = {}) {
+  const g = {
+    rng: mulberry32(seed), planets: [], T: 0, cam: 0, score: 0, maxIdx: 0, streak: 0, bestStreak: 0, grid: [],
+    trail: [], parts: [], rings: [], pops: [], shake: 0, auto: !!opts.auto, over: false, deadT: 0, shown: false,
+    minRatio: 9, target: opts.target || 0, beat: false, date: opts.date || 0, death: '', worms: [], lastWorm: 0, wormCount: 0,
+    comet: { state: 'ready', p: 0, th: -Math.PI / 2, w: 2.3, t: 0, tAll: 1, rho0: 0, rhoEntry: 0, decay: 0, rho: 0, x: 0, y: 0, vx: 0, vy: 0, from: 0, ft: 0, nextTick: 0 }
+  };
+  ensure(g, 8);
+  const P = g.planets[0], c = g.comet;
+  c.rho0 = c.rhoEntry = c.rho = P.r + (P.cap - P.r) * 0.72;
+  g.cam = P.y - viewH * 0.66;
+  return g;
+}
+
+/* ---------- game logic ---------- */
+function launch(g) {
+  const c = g.comet;
+  if (c.state !== 'ready' && c.state !== 'orbit') return;
+  const s = Math.sign(c.w) || 1, V = 600;
+  c.vx = -Math.sin(c.th) * s * V; c.vy = Math.cos(c.th) * s * V;
+  c.from = c.p; c.state = 'fly'; c.ft = 0; g.minRatio = 9;
+  const P = g.planets[c.p];
+  for (let i = 0; i < 8; i++) spawn(g, c.x, c.y, -c.vx * 0.15 + (Math.random() - 0.5) * 120, -c.vy * 0.15 + (Math.random() - 0.5) * 120, 0.35, P.pal[1], 2);
+  if (!g.auto) { sfx.launch(); buzz(6); }
+}
+
+function capture(g, j, worm) {
+  const c = g.comet, P = g.planets[j];
+  if (worm) { c.x = P.x; c.y = P.y + P.cap * 0.98; c.vx = 600; c.vy = 0; g.trail.length = 0; }
+  const rx = c.x - P.x, ry = c.y - P.y, d = Math.hypot(rx, ry), sp = Math.hypot(c.vx, c.vy);
+  const perp = Math.abs(rx * c.vy / sp - ry * c.vx / sp);
+  const ratio = perp / P.cap;
+  const q = worm ? 1 : ratio < 0.28 ? 2 : ratio < 0.62 ? 1 : 0;
+  const s = Math.sign(rx * c.vy - ry * c.vx) || 1;
+  // sau lỗ sâu: hoãn đồng hồ 0.6s để camera kịp đuổi theo
+  Object.assign(c, { state: 'orbit', p: j, th: Math.atan2(ry, rx), w: s * P.w, t: worm ? -0.6 : 0, tAll: 0, rhoEntry: d, rho0: P.r + (P.cap - P.r) * 0.72, nextTick: 0 });
+  c.decay = (c.rho0 - (P.r + 5)) / P.life;
+  ensure(g, j + 8);
+
+  if (j > g.maxIdx) {
+    const gained = j - g.maxIdx, zBefore = zoneOf(g.maxIdx);
+    g.maxIdx = j;
+    let pts = gained;
+    if (worm) { pts += 2; g.wormCount++; }
+    else {
+      if (gained > 1) pts += 2;
+      if (q === 2) { g.streak++; pts += Math.min(g.streak, 5); } else g.streak = 0;
+    }
+    g.bestStreak = Math.max(g.bestStreak, g.streak);
+    g.score += pts;
+    g.grid.push(worm ? '🌀' : gained > 1 ? '🚀' : q === 2 ? '🟩' : q === 1 ? '🟨' : '🟧');
+    const fever = !worm && q === 2 && g.streak === 5;
+    const label = worm ? 'LỖ SÂU!' : gained > 1 ? 'NHẢY CÓC!' : fever ? 'SIÊU TÂN TINH!' : q === 2 ? (g.streak >= 3 ? 'HOÀN HẢO ×' + g.streak : 'HOÀN HẢO!') : q === 1 ? 'ỔN ÁP' : 'SÁT NÚT!';
+    const col = worm ? '#c9b5ff' : gained > 1 ? '#7ef0ff' : q === 2 ? '#ffd66b' : q === 1 ? '#f6f1ff' : '#ff9f6b';
+    pop(g, c.x, c.y - 26, label, col, fever ? 26 : q === 2 || worm ? 22 : 18);
+    pop(g, c.x, c.y - 4, '+' + pts, col, 16, 0.12);
+    if (!g.auto) {
+      if (worm) sfx.worm(); else if (gained > 1) sfx.skip(); else sfx.catchQ(q, g.streak);
+      buzz(q === 2 || worm ? [10, 30, 14] : 8);
+      hudScore(g);
+      if (g.target && !g.beat && g.score > g.target) { g.beat = true; banner('VƯỢT MẶT BẠN BÈ!'); sfx.win(); }
+      else if (zoneOf(j) > zBefore) { banner(`VÙNG ${zoneOf(j) + 1} · ${zoneName(j).toUpperCase()}`); sfx.win(); }
+    }
+  } else { g.streak = 0; if (!g.auto) { sfx.catchQ(0, 0); hudScore(g); } }
+
+  const n = q === 2 ? 26 : 14;
+  for (let i = 0; i < n; i++) { const a = Math.random() * TAU, v = 60 + Math.random() * (q === 2 ? 220 : 140); spawn(g, c.x, c.y, Math.cos(a) * v, Math.sin(a) * v, 0.5 + Math.random() * 0.4, Math.random() < 0.5 ? P.pal[0] : P.pal[1], 2.4); }
+  g.rings.push({ x: P.x, y: P.y, r: P.r, max: P.cap * (q === 2 ? 1.6 : 1.2), life: 0, dur: 0.5, col: q === 2 ? '#ffd66b' : P.pal[1], p: P });
+  g.shake = Math.max(g.shake, q === 2 ? 5 : 2);
+}
+
+function die(g, kind) {
+  const c = g.comet;
+  if (c.state === 'dead') return;
+  c.state = 'dead'; g.over = true;
+  g.death = kind === 'lost' && g.minRatio < 1.35 ? 'near' : kind === 'crash' && g.planets[c.p].kind === 'hot' ? 'hot' : kind;
+  g.grid.push('💥');
+  for (let i = 0; i < 40; i++) { const a = Math.random() * TAU, v = 40 + Math.random() * 280; spawn(g, c.x, c.y, Math.cos(a) * v, Math.sin(a) * v, 0.6 + Math.random() * 0.6, ['#ff8fb1', '#ffd66b', '#7ef0ff', '#ffffff'][i % 4], 3); }
+  g.shake = 16;
+  if (!g.auto) { sfx.die(); buzz([30, 40, 60]); }
+}
+
+function update(g, dt) {
+  g.T += dt;
+  for (const p of g.planets) p.x = p.amp ? p.bx + p.amp * Math.sin(p.f * g.T * TAU + p.ph) : p.bx;
+  const c = g.comet;
+
+  if (c.state === 'ready' || c.state === 'orbit') {
+    const P = g.planets[c.p];
+    c.th += c.w * dt; c.tAll += dt;
+    if (c.state === 'orbit') c.t += dt;
+    c.rho = c.rho0 - c.decay * Math.max(0, c.t) + (c.rhoEntry - c.rho0) * Math.exp(-c.tAll * 9);
+    c.x = P.x + Math.cos(c.th) * c.rho; c.y = P.y + Math.sin(c.th) * c.rho;
+    if (c.state === 'orbit') {
+      const left = (c.rho - (P.r + 5)) / c.decay;
+      if (!g.auto && left < 1.2 && c.t > c.nextTick) { sfx.tick(); c.nextTick = c.t + 0.26; }
+      if (c.rho <= P.r + 5) die(g, 'crash');
+    }
+    if (g.auto && c.tAll > 0.3 && c.state !== 'dead') autopilot(g);
+  } else if (c.state === 'fly') {
+    c.x += c.vx * dt; c.y += c.vy * dt; c.ft += dt;
+    for (let j = 0; j < g.planets.length; j++) {
+      if (j === c.from) continue;
+      const P = g.planets[j], d = Math.hypot(c.x - P.x, c.y - P.y);
+      if (j > c.from) g.minRatio = Math.min(g.minRatio, d / P.cap);
+      if (d < P.cap) { capture(g, j); break; }
+    }
+    if (c.state === 'fly') for (const wm of g.worms) {
+      if (wm.used || wm.dest <= c.from || Math.hypot(c.x - wm.x, c.y - wm.y) > wm.r + 4) continue;
+      wm.used = true;
+      for (let i = 0; i < 24; i++) { const a = Math.random() * TAU, v = 50 + Math.random() * 200; spawn(g, wm.x, wm.y, Math.cos(a) * v, Math.sin(a) * v, 0.6, i % 2 ? '#7ef0ff' : '#c9b5ff', 2.6); }
+      ensure(g, wm.dest + 8);
+      capture(g, wm.dest, true);
+      break;
+    }
+    if (c.state === 'fly') {
+      const xmin = -offX / scale, xmax = (cssW - offX) / scale;
+      if (c.x < xmin - 20 || c.x > xmax + 20 || c.y > g.cam + viewH + 30 || c.ft > 1.4) die(g, 'lost');
+    }
+  }
+
+  if (c.state !== 'dead') { g.trail.push(c.x, c.y); if (g.trail.length > 56) g.trail.splice(0, 2); }
+  else if (g.trail.length) g.trail.splice(0, 4);
+
+  for (let i = g.parts.length - 1; i >= 0; i--) { const p = g.parts[i]; p.life += dt; if (p.life > p.dur) { g.parts.splice(i, 1); continue; } p.x += p.vx * dt; p.y += p.vy * dt; p.vx *= 0.96; p.vy *= 0.96; }
+  for (let i = g.rings.length - 1; i >= 0; i--) { const r = g.rings[i]; r.life += dt; if (r.life > r.dur) g.rings.splice(i, 1); }
+  for (let i = g.pops.length - 1; i >= 0; i--) { const p = g.pops[i]; p.life += dt; if (p.life > p.dur + p.delay) g.pops.splice(i, 1); }
+  g.shake *= Math.pow(0.02, dt);
+
+  // camera
+  const ref = g.planets[c.state === 'fly' ? c.from : c.p];
+  let target = ref.y - viewH * 0.66;
+  if (c.state === 'fly') target = Math.min(target, c.y - viewH * 0.42);
+  const camK = Math.abs(target - g.cam) > viewH * 0.7 ? 8 : 4;
+  g.cam = Number.isFinite(g.cam) ? g.cam + (target - g.cam) * Math.min(1, dt * camK) : target;
+
+  if (g.over) { g.deadT += dt; if (!g.shown && g.deadT > 0.85) { g.shown = true; onGameOver(g); } }
+}
+
+function autopilot(g) {
+  const c = g.comet, N = g.planets[c.p + 1];
+  if (!N) return;
+  const s = Math.sign(c.w) || 1, ux = -Math.sin(c.th) * s, uy = Math.cos(c.th) * s;
+  const rx = N.x - c.x, ry = N.y - c.y, along = rx * ux + ry * uy;
+  if (along > 0 && Math.abs(rx * uy - ry * ux) < N.cap * 0.14) launch(g);
+}
+
+function spawn(g, x, y, vx, vy, dur, col, size) { g.parts.push({ x, y, vx, vy, life: 0, dur, col, size }); }
+function pop(g, x, y, text, col, size, delay = 0) { g.pops.push({ x, y, text, col, size, life: 0, dur: 0.9, delay }); }
+
+/* ---------- rendering ---------- */
+let stars = [];
+function makeStars() {
+  stars = [];
+  const n = Math.round(cssW * cssH / 2400);
+  for (let i = 0; i < n; i++) stars.push({ x: Math.random() * cssW, y: Math.random() * cssH, z: [0.06, 0.16, 0.34][i % 3], s: Math.random() * 1.3 + 0.3, a: Math.random() * 0.6 + 0.3, tw: Math.random() * TAU });
+}
+const NEB = [[0.2, 0.25, 'rgba(124,90,255,0.20)'], [0.85, 0.6, 'rgba(255,110,170,0.13)'], [0.4, 0.95, 'rgba(70,200,255,0.12)']];
+
+function draw(g) {
+  const now = performance.now() / 1000;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const bg = ctx.createLinearGradient(0, 0, 0, cssH);
+  bg.addColorStop(0, '#1b1756'); bg.addColorStop(1, '#08091f');
+  ctx.fillStyle = bg; ctx.fillRect(0, 0, cssW, cssH);
+  const tint = ZTINT[Math.min(ZTINT.length - 1, zoneOf(g.maxIdx))];
+  if (tint) { ctx.fillStyle = tint; ctx.fillRect(0, 0, cssW, cssH); }
+  const camPx = g.cam * scale;
+  const big = Math.max(cssW, cssH);
+  for (const [nx, ny, col] of NEB) {
+    const yy = ((ny * cssH * 1.6 - camPx * 0.04) % (cssH * 1.6) + cssH * 1.6) % (cssH * 1.6) - cssH * 0.3;
+    const gr = ctx.createRadialGradient(nx * cssW, yy, 0, nx * cssW, yy, big * 0.55);
+    gr.addColorStop(0, col); gr.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = gr; ctx.fillRect(0, 0, cssW, cssH);
+  }
+  for (const s of stars) {
+    const y = ((s.y - camPx * s.z) % cssH + cssH) % cssH;
+    ctx.globalAlpha = s.a * (0.7 + 0.3 * Math.sin(now * 2 + s.tw));
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(s.x, y, s.s, s.s);
+  }
+  ctx.globalAlpha = 1;
+
+  let sx = 0, sy = 0;
+  if (g.shake > 0.3 && !reduceMotion) { sx = (Math.random() - 0.5) * g.shake; sy = (Math.random() - 0.5) * g.shake; }
+  ctx.setTransform(dpr * scale, 0, 0, dpr * scale, dpr * (offX + sx), dpr * (sy - g.cam * scale));
+
+  const c = g.comet, top = g.cam - 140, bot = g.cam + viewH + 140;
+  const cur = c.state === 'fly' ? c.from : c.p;
+
+  // capture zones
+  for (let j = 0; j < g.planets.length; j++) {
+    const P = g.planets[j];
+    if (P.y < top || P.y > bot || j === cur) continue;
+    const next = j === cur + 1;
+    ctx.beginPath(); ctx.arc(P.x, P.y, P.cap, 0, TAU);
+    ctx.fillStyle = hexA(P.pal[1], next ? 0.09 : 0.045); ctx.fill();
+    ctx.setLineDash([4, 7]); ctx.lineDashOffset = -now * 12;
+    ctx.strokeStyle = hexA(P.pal[0], next ? 0.55 : 0.2); ctx.lineWidth = next ? 1.6 : 1; ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // current orbit ring + danger
+  if (c.state === 'orbit' || c.state === 'ready') {
+    const P = g.planets[c.p];
+    const span = c.rho0 - (P.r + 5);
+    const danger = c.state === 'ready' ? 0 : Math.max(0, Math.min(1, 1 - (c.rho - (P.r + 5)) / span));
+    const left = c.state === 'orbit' && c.decay ? (c.rho - (P.r + 5)) / c.decay : 99;   // giây còn lại
+    const pulse = left < 1.5 ? 0.5 + 0.5 * Math.sin(now * 22) : 1;
+    ctx.beginPath(); ctx.arc(P.x, P.y, c.rho, 0, TAU);
+    const hotK = Math.max(0, Math.min(1, 1 - left / 3));   // đỏ dần trong 3 giây cuối
+    ctx.strokeStyle = hotK > 0 ? `rgba(255,${Math.round(lerp(220, 90, hotK))},${Math.round(lerp(220, 120, hotK))},${0.35 + 0.45 * hotK * pulse})` : 'rgba(246,241,255,0.3)';
+    ctx.lineWidth = 1.5 + hotK * 1.5; ctx.stroke();
+    // vòng đếm ngược: phần cung còn lại = thời gian còn lại trước khi rơi
+    if (c.state === 'orbit') {
+      ctx.beginPath(); ctx.arc(P.x, P.y, P.cap + 4, -Math.PI / 2, -Math.PI / 2 + TAU * Math.max(0.001, 1 - danger));
+      ctx.strokeStyle = left < 2 ? `rgba(255,143,177,${0.6 + 0.4 * pulse})` : left < 4 ? 'rgba(255,214,107,0.9)' : 'rgba(246,241,255,0.75)';
+      ctx.lineWidth = 3.5; ctx.lineCap = 'round'; ctx.stroke(); ctx.lineCap = 'butt';
+    }
+    // training-wheel aim line on the first two planets
+    if (!g.auto && c.p < 2 && g.maxIdx < 2) {
+      const s = Math.sign(c.w) || 1, ux = -Math.sin(c.th) * s, uy = Math.cos(c.th) * s;
+      ctx.setLineDash([2, 8]); ctx.beginPath(); ctx.moveTo(c.x, c.y); ctx.lineTo(c.x + ux * 170, c.y + uy * 170);
+      ctx.strokeStyle = 'rgba(126,240,255,0.45)'; ctx.lineWidth = 2; ctx.stroke(); ctx.setLineDash([]);
+    }
+  }
+
+  // shock rings
+  for (const r of g.rings) {
+    const t = r.life / r.dur, rr = lerp(r.r, r.max, 1 - Math.pow(1 - t, 3));
+    ctx.beginPath(); ctx.arc(r.p.x, r.p.y, rr, 0, TAU);
+    ctx.strokeStyle = hexA(r.col, (1 - t) * 0.8); ctx.lineWidth = 3 * (1 - t) + 0.5; ctx.stroke();
+  }
+
+  // wormholes
+  for (const wm of g.worms) {
+    if (wm.used || wm.y < top || wm.y > bot) continue;
+    const live = wm.from >= cur;
+    ctx.globalAlpha = live ? 1 : 0.25;
+    const wg = ctx.createRadialGradient(wm.x, wm.y, 0, wm.x, wm.y, wm.r * 2.2);
+    wg.addColorStop(0, 'rgba(201,181,255,0.45)'); wg.addColorStop(1, 'rgba(201,181,255,0)');
+    ctx.fillStyle = wg; ctx.beginPath(); ctx.arc(wm.x, wm.y, wm.r * 2.2, 0, TAU); ctx.fill();
+    ctx.save(); ctx.translate(wm.x, wm.y); ctx.rotate(now * 2.4); ctx.lineCap = 'round';
+    for (let k = 0; k < 3; k++) {
+      ctx.beginPath(); ctx.arc(0, 0, wm.r * (1 - k * 0.3), k * 2.1, k * 2.1 + 4.2);
+      ctx.strokeStyle = k % 2 ? 'rgba(126,240,255,0.95)' : 'rgba(201,181,255,0.95)'; ctx.lineWidth = 3 - k * 0.6; ctx.stroke();
+    }
+    ctx.restore(); ctx.lineCap = 'butt';
+    if (live) {
+      ctx.fillStyle = '#c9b5ff'; ctx.textAlign = 'center'; ctx.font = "800 13px 'Baloo 2', system-ui, sans-serif";
+      ctx.fillText('LỐI TẮT +3', wm.x, wm.y + wm.r + 18);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // planets
+  for (let j = 0; j < g.planets.length; j++) {
+    const P = g.planets[j];
+    if (P.y < top || P.y > bot) continue;
+    drawPlanet(P, j < cur ? 0.5 : 1);
+  }
+
+  // hint under first planet
+  if (!g.auto && c.state === 'ready') {
+    const P = g.planets[0];
+    ctx.globalAlpha = 0.6 + 0.4 * Math.sin(now * 5);
+    ctx.fillStyle = '#ffd66b'; ctx.textAlign = 'center'; ctx.font = "800 22px 'Baloo 2', system-ui, sans-serif";
+    ctx.fillText('CHẠM ĐỂ PHÓNG', P.x, P.y + P.cap + 34);
+    ctx.font = "600 13px 'Be Vietnam Pro', system-ui, sans-serif"; ctx.fillStyle = '#f6f1ff';
+    ctx.fillText('khi đường chấm chỉ vào hành tinh kế tiếp', P.x, P.y + P.cap + 56);
+    ctx.globalAlpha = 1;
+  }
+
+  // trail
+  const tr = g.trail, n = tr.length / 2;
+  ctx.lineCap = 'round';
+  for (let i = 1; i < n; i++) {
+    const k = i / n;
+    ctx.beginPath(); ctx.moveTo(tr[i * 2 - 2], tr[i * 2 - 1]); ctx.lineTo(tr[i * 2], tr[i * 2 + 1]);
+    const fever = g.streak >= 5;
+    ctx.strokeStyle = fever ? `rgba(255,${Math.round(lerp(120, 230, k))},${Math.round(lerp(60, 150, k))},${k * 0.95})`
+      : `rgba(${Math.round(lerp(255, 126, k))},${Math.round(lerp(143, 240, k))},${Math.round(lerp(177, 255, k))},${k * 0.85})`;
+    ctx.lineWidth = 0.6 + k * (fever ? 9 : 6); ctx.stroke();
+  }
+
+  // comet
+  if (c.state !== 'dead') {
+    const gl = ctx.createRadialGradient(c.x, c.y, 0, c.x, c.y, 20);
+    gl.addColorStop(0, 'rgba(126,240,255,0.65)'); gl.addColorStop(1, 'rgba(126,240,255,0)');
+    ctx.fillStyle = gl; ctx.beginPath(); ctx.arc(c.x, c.y, 20, 0, TAU); ctx.fill();
+    ctx.fillStyle = g.streak >= 3 ? '#ffd66b' : '#ffffff';
+    ctx.beginPath(); ctx.arc(c.x, c.y, 5, 0, TAU); ctx.fill();
+  }
+
+  // particles
+  ctx.globalCompositeOperation = 'lighter';
+  for (const p of g.parts) {
+    const t = 1 - p.life / p.dur;
+    ctx.globalAlpha = t; ctx.fillStyle = p.col;
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.size * (0.4 + t * 0.6), 0, TAU); ctx.fill();
+  }
+  ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
+
+  // pop texts
+  ctx.textAlign = 'center';
+  for (const p of g.pops) {
+    const t = (p.life - p.delay) / p.dur;
+    if (t < 0) continue;
+    const s = t < 0.15 ? lerp(0.6, 1.15, t / 0.15) : lerp(1.15, 1, Math.min(1, (t - 0.15) / 0.2));
+    ctx.globalAlpha = t > 0.65 ? 1 - (t - 0.65) / 0.35 : 1;
+    ctx.font = `800 ${Math.round(p.size * s)}px 'Baloo 2', system-ui, sans-serif`;
+    ctx.fillStyle = 'rgba(8,9,31,0.6)'; ctx.fillText(p.text, p.x + 1.5, p.y - t * 30 + 2);
+    ctx.fillStyle = p.col; ctx.fillText(p.text, p.x, p.y - t * 30);
+  }
+  ctx.globalAlpha = 1;
+}
+
+function drawPlanet(P, alpha) {
+  ctx.globalAlpha = alpha;
+  const { x, y, r } = P;
+  if (P.kind === 'hot') {
+    const pu = 0.75 + 0.25 * Math.sin(performance.now() / 110), ag = ctx.createRadialGradient(x, y, r * 0.8, x, y, r * 2);
+    ag.addColorStop(0, `rgba(255,120,50,${0.55 * pu})`); ag.addColorStop(1, 'rgba(255,120,50,0)');
+    ctx.fillStyle = ag; ctx.beginPath(); ctx.arc(x, y, r * 2, 0, TAU); ctx.fill();
+  }
+  if (P.ring) { ctx.save(); ctx.translate(x, y); ctx.rotate(P.tilt); ctx.beginPath(); ctx.ellipse(0, 0, r * 1.75, r * 0.42, 0, Math.PI, TAU); ctx.strokeStyle = hexA(P.pal[0], 0.6); ctx.lineWidth = 3; ctx.stroke(); ctx.restore(); }
+  const gr = ctx.createRadialGradient(x - r * 0.35, y - r * 0.4, r * 0.1, x, y, r);
+  gr.addColorStop(0, P.pal[0]); gr.addColorStop(0.55, P.pal[1]); gr.addColorStop(1, P.pal[2]);
+  ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fill();
+  ctx.fillStyle = hexA(P.pal[2], 0.35);
+  for (const k of P.craters) { ctx.beginPath(); ctx.arc(x + Math.cos(k.a) * k.dd * r, y + Math.sin(k.a) * k.dd * r, k.s * r, 0, TAU); ctx.fill(); }
+  if (P.ring) { ctx.save(); ctx.translate(x, y); ctx.rotate(P.tilt); ctx.beginPath(); ctx.ellipse(0, 0, r * 1.75, r * 0.42, 0, 0, Math.PI); ctx.strokeStyle = hexA(P.pal[0], 0.85); ctx.lineWidth = 3; ctx.stroke(); ctx.restore(); }
+  ctx.globalAlpha = 1;
+}
+
+const hexCache = {};
+function hexA(hex, a) {
+  let rgb = hexCache[hex];
+  if (!rgb) { const v = parseInt(hex.slice(1), 16); rgb = hexCache[hex] = [(v >> 16) & 255, (v >> 8) & 255, v & 255]; }
+  return `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${a.toFixed(3)})`;
+}
+
+/* ---------- sizing ---------- */
+function resize() {
+  cssW = window.innerWidth || document.documentElement.clientWidth || 400;
+  cssH = window.innerHeight || document.documentElement.clientHeight || 700;
+  dpr = Math.min(2, window.devicePixelRatio || 1);
+  cv.width = Math.round(cssW * dpr); cv.height = Math.round(cssH * dpr);
+  const colW = Math.min(cssW, cssH * 0.62, 520);
+  scale = colW / W; offX = (cssW - colW) / 2; viewH = cssH / scale;
+  makeStars();
+}
+
+/* ---------- UI state ---------- */
+let state = 'menu', game = null, attract = null, mode = 'daily', attemptNo = 0;
+let challenge = null;
+function readHash() {
+  const m = /^#?vs-(\d{1,4})-(\d{8})$/.exec(location.hash || '');
+  challenge = null;
+  if (m) { const date = +m[2]; if (date <= TODAY && date > 20260000) challenge = { score: +m[1], date }; }
+}
+readHash();
+window.addEventListener('hashchange', () => { readHash(); if (state === 'menu') refreshMenu(); });
+
+const RANKS = [[0, 'Thiên thạch lạc lối'], [10, 'Phi hành gia tập sự'], [25, 'Thợ săn quỹ đạo'], [50, 'Thánh canh giờ'], [90, 'Bậc thầy trọng lực'], [150, 'Huyền thoại Ngân Hà']];
+const rankOf = s => RANKS.reduce((a, r) => (s >= r[0] ? r[1] : a), RANKS[0][1]);
+const REASONS = {
+  crash: ['Hết giờ! Để ý vòng đếm ngược quanh hành tinh nhé.', 'Chần chừ quá lâu, hành tinh đã kéo bạn xuống.'],
+  hot: ['Sao lùn đỏ thiêu rụi bạn. Ở đây đồng hồ chạy nhanh hơn.', 'Quá nóng! Sao lùn đỏ không cho ai nán lại lâu.'],
+  lost: ['Trôi vào hư vô...', 'Bay lạc khỏi dải Ngân Hà.', 'Vũ trụ rộng lắm, nhưng không rộng thế đâu.'],
+  near: ['Suýt nữa thôi! Hụt đúng một sợi tóc.', 'Sượt qua vùng hút trong gang tấc!']
+};
+const pick = a => a[Math.floor(Math.random() * a.length)];
+
+function getDaily() { const d = store.get('qd-daily', null); return d && d.date === TODAY ? d : { date: TODAY, used: 0, best: 0, runs: [] }; }
+function saveDaily(d) { store.set('qd-daily', d); }
+
+function refreshMenu() {
+  const d = getDaily(), left = DAILY_TRIES - d.used;
+  $('m-day').textContent = `Ngày #${dayNo(TODAY)} · ${fmtDate(TODAY)}`;
+  const bd = $('b-daily');
+  if (left > 0) { bd.disabled = false; bd.firstChild.textContent = 'Thử thách hôm nay'; $('m-left').textContent = `còn ${left}/${DAILY_TRIES} lượt`; }
+  else { bd.disabled = true; bd.firstChild.textContent = 'Hết lượt hôm nay'; $('m-left').textContent = 'bản đồ mới sau ' + untilMidnight(); }
+  const fb = store.get('qd-best', 0);
+  const parts = [];
+  if (d.used) parts.push(`Hôm nay: <b>${d.best}</b> điểm`);
+  if (fb) parts.push(`Kỷ lục tự do: <b>${fb}</b>`);
+  $('m-best').innerHTML = parts.join(' · ');
+  $('m-best').hidden = !parts.length;
+  if (challenge) {
+    $('m-challenge').hidden = false; $('b-challenge').hidden = false;
+    $('m-challenge').innerHTML = `Một người bạn vừa đạt <b>${challenge.score}</b> điểm trên bản đồ ngày ${fmtDate(challenge.date)}. Bạn có vượt mặt được không?`;
+  } else { $('m-challenge').hidden = true; $('b-challenge').hidden = true; }
+}
+function untilMidnight() {
+  const n = new Date(), t = new Date(n.getFullYear(), n.getMonth(), n.getDate() + 1);
+  const mins = Math.max(1, Math.round((t - n) / 60000));
+  return `${Math.floor(mins / 60)} giờ ${mins % 60} phút`;
+}
+
+function startRun(md) {
+  audio();
+  let seed, target = 0, date = 0;
+  if (md === 'daily') {
+    const d = getDaily();
+    if (d.used >= DAILY_TRIES) { md = 'free'; }
+    else { d.used++; saveDaily(d); attemptNo = d.used; seed = seedOf(TODAY); date = TODAY; if (challenge && challenge.date === TODAY) target = challenge.score; }
+  }
+  if (md === 'challenge') { seed = seedOf(challenge.date); date = challenge.date; target = challenge.score; }
+  if (md === 'free') seed = randSeed();
+  mode = md;
+  game = newRun(seed, { target, date });
+  state = 'play';
+  $('menu').hidden = true; $('over').hidden = true; $('hud').hidden = false; $('o-text').hidden = true;
+  $('h-mode').innerHTML = md === 'daily' ? `<b>Ngày #${dayNo(TODAY)}</b>` : md === 'challenge' ? `<b>Thách đấu ${fmtDate(date)}</b>` : '<b>Tự do</b>';
+  $('h-sub').textContent = md === 'daily' ? `Lượt ${attemptNo}/${DAILY_TRIES}` + (target ? ` · cần ${target + 1}` : '') : target ? `Mục tiêu: ${target + 1}` : getDaily().used >= DAILY_TRIES ? 'Không tính điểm ngày' : 'Kỷ lục: ' + store.get('qd-best', 0);
+  if (md === 'free' && getDaily().used >= DAILY_TRIES) toast('Đã hết 3 lượt hôm nay. Đây là chế độ tự do.');
+  hudScore(game);
+}
+function acceptChallenge() {
+  if (challenge.date === TODAY && getDaily().used < DAILY_TRIES) startRun('daily'); else startRun('challenge');
+}
+
+let lastScore = -1, lastStreak = -1;
+function hudScore(g) {
+  if (g.score !== lastScore) { $('score').textContent = g.score; lastScore = g.score; }
+  if (g.streak !== lastStreak) {
+    const el = $('combo');
+    el.textContent = g.streak >= 2 ? `CHUỖI ×${g.streak}` : '';
+    el.classList.remove('bump'); void el.offsetWidth; if (g.streak >= 2) el.classList.add('bump');
+    lastStreak = g.streak;
+  }
+}
+
+function onGameOver(g) {
+  if (g.auto) { attract = newRun(randSeed(), { auto: true }); return; }
+  state = 'over';
+  let best, isNew = false;
+  if (mode === 'daily') {
+    const d = getDaily(); d.runs.push(g.score);
+    if (g.score > d.best) { d.best = g.score; isNew = d.runs.length > 1; }
+    saveDaily(d); best = d.best;
+  } else if (mode === 'free') {
+    const fb = store.get('qd-best', 0);
+    if (g.score > fb) { store.set('qd-best', g.score); isNew = fb > 0; }
+    best = Math.max(fb, g.score);
+  } else {
+    const k = 'qd-ch-' + g.date, cb = store.get(k, 0);
+    if (g.score > cb) store.set(k, g.score);
+    best = Math.max(cb, g.score);
+  }
+  $('o-ctx').textContent = (mode === 'daily' ? `Ngày #${dayNo(TODAY)} · Lượt ${attemptNo}/${DAILY_TRIES}` : mode === 'challenge' ? `Thách đấu · bản đồ ${fmtDate(g.date)}` : 'Chế độ tự do') + ` · Vùng ${zoneOf(g.maxIdx) + 1}`;
+  $('o-new').hidden = !isNew;
+  $('o-score').textContent = g.score;
+  $('o-rank').textContent = rankOf(g.score);
+  $('o-reason').textContent = pick(REASONS[g.death] || REASONS.lost);
+  const vs = $('o-vs');
+  if (g.target) {
+    vs.hidden = false;
+    if (g.score > g.target) { vs.className = 'vs win'; vs.textContent = `Bạn đã vượt mặt bạn bè (${g.target} điểm) thêm ${g.score - g.target} điểm!`; }
+    else { vs.className = 'vs lose'; vs.textContent = `Còn thiếu ${g.target - g.score + 1} điểm để vượt mặt bạn bè (${g.target}).`; }
+  } else vs.hidden = true;
+  const cells = gridCells(g.grid);
+  $('o-grid').innerHTML = cells.map(e => `<span>${e}</span>`).join('');
+  $('o-planets').textContent = g.maxIdx;
+  $('o-streak').textContent = g.bestStreak;
+  $('o-best').textContent = best;
+  const retry = $('b-retry'), note = $('o-note'), dd = getDaily();
+  note.hidden = true;
+  if (mode === 'daily') {
+    const left = DAILY_TRIES - dd.used;
+    retry.firstChild.textContent = left > 0 ? 'Chơi lại' : 'Chơi tự do';
+    $('o-left').textContent = left > 0 ? `còn ${left} lượt hôm nay` : 'không tính điểm ngày';
+    if (left <= 0) {
+      note.hidden = false;
+      note.innerHTML = `Bạn đã dùng hết ${DAILY_TRIES} lượt hôm nay. Điểm ngày chốt ở <b>${dd.best}</b>. Chơi tiếp sẽ sang chế độ tự do: bản đồ ngẫu nhiên, không tính vào điểm ngày. Bản đồ mới sau ${untilMidnight()}.`;
+    }
+  } else {
+    retry.firstChild.textContent = 'Chơi lại'; $('o-left').textContent = 'hoặc bấm Space';
+    if (mode === 'free' && dd.used >= DAILY_TRIES) { note.hidden = false; note.innerHTML = `Đây là chế độ tự do. Điểm ngày hôm nay của bạn vẫn là <b>${dd.best}</b>.`; }
+  }
+  $('hud').hidden = true;
+  $('over').hidden = false;
+  retry.focus({ preventScroll: true });
+}
+function gridCells(grid) { return grid.length <= 40 ? grid.slice() : grid.slice(0, 38).concat('…', grid[grid.length - 1]); }
+
+function shareText(g) {
+  const head = mode === 'free' ? `🌠 QUỸ ĐẠO · Tự do — ${g.score} điểm` : `🌠 QUỸ ĐẠO #${dayNo(g.date)} — ${g.score} điểm`;
+  const cells = gridCells(g.grid), rows = [];
+  for (let i = 0; i < cells.length; i += 10) rows.push(cells.slice(i, i + 10).join(''));
+  const lines = [head, `🪐 ${g.maxIdx} hành tinh · Vùng ${zoneOf(g.maxIdx) + 1} (${zoneName(g.maxIdx)}) · 🔥 chuỗi ${g.bestStreak}`, ...rows, `Danh hiệu: ${rankOf(g.score)}`];
+  if (mode === 'free') { if (SHARE_URL) lines.push(`Chơi thử 👉 ${SHARE_URL}`); }
+  else if (SHARE_URL) lines.push(`Vượt mặt mình đi 👉 ${SHARE_URL}#vs-${g.score}-${g.date}`);
+  else lines.push(`Mã thách đấu: vs-${g.score}-${g.date}`);
+  return lines.join('\n');
+}
+function share() {
+  const text = shareText(game);
+  const fallback = () => { const ta = $('o-text'); ta.hidden = false; ta.value = text; ta.focus(); ta.select(); toast('Bôi đen và chép đoạn bên dưới nhé'); };
+  const copy = () => {
+    try { navigator.clipboard.writeText(text).then(() => toast('Đã chép! Dán vào Messenger, Zalo hay TikTok để thách bạn bè'), fallback); }
+    catch (e) { fallback(); }
+  };
+  if (NATIVE) { try { NATIVE.postMessage({ type: 'share', text }); return; } catch (e) {} }
+  // Trên web thật (không nằm trong khung nhúng) thì mở bảng chia sẻ của điện thoại
+  let top = false; try { top = window.top === window.self; } catch (e) {}
+  if (top && navigator.share && matchMedia('(pointer: coarse)').matches) { navigator.share({ text }).catch(err => { if (!err || err.name !== 'AbortError') copy(); }); return; }
+  copy();
+}
+
+let toastT = 0;
+function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2600); }
+let bannerT = 0;
+function banner(msg) { const b = $('banner'); b.textContent = msg; b.classList.add('show'); clearTimeout(bannerT); bannerT = setTimeout(() => b.classList.remove('show'), 1400); }
+
+const ICON_ON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/><path d="M19 6a8.5 8.5 0 0 1 0 12"/></svg>';
+const ICON_OFF = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M17 9l5 6M22 9l-5 6"/></svg>';
+function renderMute() { $('b-mute2').innerHTML = muted ? ICON_OFF : ICON_ON; $('b-mute').textContent = 'Âm thanh: ' + (muted ? 'tắt' : 'bật'); }
+function toggleMute() { muted = !muted; store.set('qd-mute', muted); renderMute(); if (!muted) audio(); }
+
+/* ---------- input ---------- */
+cv.addEventListener('pointerdown', e => { e.preventDefault(); if (state === 'play' && game) { audio(); launch(game); } });
+window.addEventListener('keydown', e => {
+  if (e.code === 'Space' || e.code === 'Enter' || e.code === 'ArrowUp') {
+    if (state === 'play' && game) { e.preventDefault(); audio(); launch(game); }
+    else if (state === 'over' && e.code === 'Space') { e.preventDefault(); $('b-retry').click(); }
+  } else if (e.code === 'Escape' && state !== 'menu') goMenu();
+  else if (e.code === 'KeyM') toggleMute();
+});
+function goMenu() { state = 'menu'; $('over').hidden = true; $('hud').hidden = true; $('menu').hidden = false; refreshMenu(); }
+$('b-daily').addEventListener('click', () => startRun('daily'));
+$('b-free').addEventListener('click', () => startRun('free'));
+$('b-challenge').addEventListener('click', acceptChallenge);
+$('b-retry').addEventListener('click', () => startRun(mode === 'daily' && getDaily().used >= DAILY_TRIES ? 'free' : mode));
+$('b-share').addEventListener('click', share);
+$('b-menu').addEventListener('click', goMenu);
+$('b-mute').addEventListener('click', toggleMute);
+$('b-mute2').addEventListener('click', toggleMute);
+window.addEventListener('resize', resize);
+
+/* ---------- boot ---------- */
+resize();
+renderMute();
+refreshMenu();
+attract = newRun(randSeed(), { auto: true });
+let last = performance.now();
+function frame(now) {
+  const dt = Math.min(0.033, (now - last) / 1000); last = now;
+  const g = state === 'menu' ? attract : game;
+  requestAnimationFrame(frame);
+  if (g) { update(g, dt); draw(g); }
+}
+requestAnimationFrame(frame);
+window.__qd = {
+  get game() { return game; }, get attract() { return attract; }, launch: () => game && launch(game),
+  // đo số giây (thời gian trong game) được đứng yên ở hành tinh thứ idx trước khi rơi
+  lifeTest(seed, idx) {
+    const g = newRun(seed, { auto: true }); g.cam = 0; let steps = 0;
+    while (!g.over && !(g.comet.state === 'orbit' && g.comet.p >= idx) && steps < 3e6) { update(g, 1 / 600); steps++; }
+    if (g.over) return null;
+    g.auto = false; const p = g.comet.p, T0 = g.T - g.comet.t;
+    while (!g.over && steps < 6e6) { update(g, 1 / 600); steps++; }
+    g.shown = true;
+    return { planet: p, kind: g.planets[p].kind, seconds: +(g.T - T0).toFixed(1) };
+  },
+  // mô phỏng người chơi "hoàn hảo" để kiểm tra bản đồ có công bằng không (không ảnh hưởng game đang chạy)
+  sim(seed, upto = 60) {
+    const g = newRun(seed, { auto: true }); g.cam = 0; let steps = 0;
+    while (!g.over && g.maxIdx < upto && steps < 3e6) { update(g, 1 / 600); steps++; }
+    const kinds = {}; for (const p of g.planets.slice(0, g.maxIdx + 1)) kinds[p.kind] = (kinds[p.kind] || 0) + 1;
+    const nx = g.planets[g.comet.from + 1];
+    return { idx: g.maxIdx, death: g.death, at: g.over ? g.planets[g.comet.p].kind : '', missedMoving: g.over ? +(nx.amp * nx.f).toFixed(1) : 0, score: g.score, kinds, worms: g.worms.length, secs: Math.round(g.T) };
+  }
+};
+})();
+</script>

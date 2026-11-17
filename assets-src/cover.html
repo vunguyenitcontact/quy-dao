@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="vi"><head><meta charset="utf-8">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@800&family=Be+Vietnam+Pro:wght@600&display=swap">
+<style>
+html,body{margin:0}
+body{width:1200px;height:630px;overflow:hidden;position:relative;background:linear-gradient(180deg,#241d6e,#08091f);font-family:'Be Vietnam Pro',system-ui,sans-serif;color:#f6f1ff}
+svg{position:absolute;inset:0}
+.txt{position:absolute;left:80px;top:120px;width:620px}
+.eyebrow{font-size:26px;letter-spacing:.12em;text-transform:uppercase;color:#7ef0ff;margin:0 0 6px}
+h1{font-family:'Baloo 2','Arial Rounded MT Bold',sans-serif;font-weight:800;font-size:190px;line-height:.82;margin:0;text-shadow:0 0 60px rgba(126,240,255,.4)}
+h1 span{color:#ffd66b}
+p.tag{font-size:34px;line-height:1.35;margin:34px 0 0;color:#cfc9f5}
+</style></head>
+<body>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <radialGradient id="neb" cx="0.15" cy="0.1" r="0.7"><stop offset="0" stop-color="#7c5aff" stop-opacity=".5"/><stop offset="1" stop-color="#7c5aff" stop-opacity="0"/></radialGradient>
+    <radialGradient id="neb2" cx="0.95" cy="0.9" r="0.6"><stop offset="0" stop-color="#ff6eaa" stop-opacity=".3"/><stop offset="1" stop-color="#ff6eaa" stop-opacity="0"/></radialGradient>
+    <radialGradient id="p1" cx="0.36" cy="0.32" r="0.75"><stop offset="0" stop-color="#fff1b8"/><stop offset=".55" stop-color="#ffc24b"/><stop offset="1" stop-color="#9a4f13"/></radialGradient>
+    <radialGradient id="p2" cx="0.36" cy="0.32" r="0.75"><stop offset="0" stop-color="#c8ffe4"/><stop offset=".55" stop-color="#4fcfaa"/><stop offset="1" stop-color="#1b5e63"/></radialGradient>
+    <radialGradient id="p3" cx="0.36" cy="0.32" r="0.75"><stop offset="0" stop-color="#ffd2ea"/><stop offset=".55" stop-color="#ff7cbc"/><stop offset="1" stop-color="#7d1f5b"/></radialGradient>
+    <linearGradient id="trail" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#ff8fb1" stop-opacity="0"/><stop offset="1" stop-color="#7ef0ff"/></linearGradient>
+    <radialGradient id="glow"><stop offset="0" stop-color="#7ef0ff" stop-opacity=".9"/><stop offset="1" stop-color="#7ef0ff" stop-opacity="0"/></radialGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#neb)"/><rect width="1200" height="630" fill="url(#neb2)"/>
+  <g fill="#fff">
+    <circle cx="60" cy="60" r="2.5" opacity=".8"/><circle cx="700" cy="50" r="2" opacity=".7"/><circle cx="1150" cy="80" r="2.5" opacity=".7"/>
+    <circle cx="640" cy="580" r="2" opacity=".6"/><circle cx="340" cy="590" r="2" opacity=".6"/><circle cx="1100" cy="330" r="2" opacity=".6"/>
+    <circle cx="760" cy="300" r="2" opacity=".5"/><circle cx="40" cy="420" r="2" opacity=".6"/><circle cx="560" cy="90" r="1.8" opacity=".6"/>
+  </g>
+  <!-- bottom planet with orbit -->
+  <circle cx="860" cy="500" r="150" fill="none" stroke="#f6f1ff" stroke-opacity=".35" stroke-width="3" stroke-dasharray="6 10"/>
+  <circle cx="860" cy="500" r="88" fill="url(#p2)"/>
+  <ellipse cx="860" cy="500" rx="150" ry="34" fill="none" stroke="#c8ffe4" stroke-opacity=".8" stroke-width="6" transform="rotate(-14 860 500)"/>
+  <!-- target planet -->
+  <circle cx="1040" cy="170" r="120" fill="#ffc24b" fill-opacity=".1" stroke="#fff1b8" stroke-opacity=".6" stroke-width="3" stroke-dasharray="6 10"/>
+  <circle cx="1040" cy="170" r="70" fill="url(#p1)"/>
+  <!-- small pink planet -->
+  <circle cx="760" cy="150" r="34" fill="url(#p3)"/>
+  <!-- comet flying from bottom orbit toward target -->
+  <path d="M790 368 L 950 246" fill="none" stroke="url(#trail)" stroke-width="22" stroke-linecap="round"/>
+  <circle cx="950" cy="246" r="48" fill="url(#glow)"/><circle cx="950" cy="246" r="15" fill="#fff"/>
+</svg>
+<div class="txt">
+  <p class="eyebrow">Mỗi ngày một bản đồ</p>
+  <h1>Quỹ<br><span>Đạo</span></h1>
+  <p class="tag">Bạn qua được mấy hành tinh?</p>
+</div>
+</body></html>
