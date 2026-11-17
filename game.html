@@ -259,8 +259,11 @@ const store = {
 };
 
 /* ---------- dates & seeds ---------- */
-const ymd = d => d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
-const TODAY = ymd(new Date());
+// "Ngày" của game tính theo giờ Việt Nam (UTC+7) trên MỌI máy, để ai cũng chơi chung một bản đồ
+// và chung một bảng xếp hạng, bất kể máy đang để múi giờ nào.
+const VN_OFFSET = 7 * 3600e3, DAY_MS = 864e5;
+const ymdVN = ms => { const d = new Date(ms + VN_OFFSET); return d.getUTCFullYear() * 10000 + (d.getUTCMonth() + 1) * 100 + d.getUTCDate(); };
+const TODAY = ymdVN(Date.now());
 const dayNo = n => Math.round((Date.UTC(Math.floor(n / 10000), Math.floor(n / 100) % 100 - 1, n % 100) - Date.UTC(2026, 0, 1)) / 864e5) + 1;
 const fmtDate = n => (n % 100) + '/' + (Math.floor(n / 100) % 100);
 const seedOf = n => (Math.imul(n, 2654435761) ^ 0x5bd1e995) >>> 0;
@@ -756,8 +759,8 @@ function refreshMenu() {
   if (LB_ON) menuRank();
 }
 function untilMidnight() {
-  const n = new Date(), t = new Date(n.getFullYear(), n.getMonth(), n.getDate() + 1);
-  const mins = Math.max(1, Math.round((t - n) / 60000));
+  // tới nửa đêm giờ Việt Nam, lúc bản đồ đổi cho mọi người
+  const mins = Math.max(1, Math.round((DAY_MS - (Date.now() + VN_OFFSET) % DAY_MS) / 60000));
   return `${Math.floor(mins / 60)} giờ ${mins % 60} phút`;
 }
 
@@ -911,7 +914,7 @@ function playerId() {
 }
 const cleanName = s => String(s || '').replace(/[\u0000-\u001f<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, 16);
 const getName = () => cleanName(store.get('qd-name', ''));
-const ydayOf = () => { const n = new Date(); return ymd(new Date(n.getFullYear(), n.getMonth(), n.getDate() - 1)); };
+const ydayOf = () => ymdVN(Date.now() - DAY_MS);
 function linkBtn(label, fn) { const b = document.createElement('button'); b.type = 'button'; b.className = 'link'; b.textContent = label; b.addEventListener('click', fn); return b; }
 
 let lastRank = null;   // hạng hôm nay mới nhất mà máy chủ trả về: {rank, total}
