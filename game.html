@@ -769,7 +769,7 @@ function onGameOver(g) {
       note.innerHTML = `Bạn đã dùng hết ${DAILY_TRIES} lượt hôm nay. Điểm ngày chốt ở <b>${dd.best}</b>. Chơi tiếp sẽ sang chế độ tự do: bản đồ ngẫu nhiên, không tính vào điểm ngày. Bản đồ mới sau ${untilMidnight()}.`;
     }
   } else {
-    retry.firstChild.textContent = 'Chơi lại'; $('o-left').textContent = 'hoặc bấm Space';
+    retry.firstChild.textContent = 'Chơi lại'; $('o-left').textContent = matchMedia('(pointer: coarse)').matches ? 'thử lại ngay' : 'hoặc bấm Space';
     if (mode === 'free' && dd.used >= DAILY_TRIES) { note.hidden = false; note.innerHTML = `Đây là chế độ tự do. Điểm ngày hôm nay của bạn vẫn là <b>${dd.best}</b>.`; }
   }
   $('hud').hidden = true;
