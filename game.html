@@ -1,4 +1,4 @@
-<title>Quỹ Đạo</title>
+<title>Orbit Hop</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="description" content="Tap at the right moment to sling your comet from planet to planet. One new map a day, the same map for everyone.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -58,7 +58,7 @@ body{background:var(--space-deep);color:var(--ink);font-family:var(--f-body);fon
 .lang button:focus-visible{outline:3px solid var(--comet);outline-offset:2px}
 .logo{font-family:var(--f-display);font-weight:800;font-size:clamp(60px,18vw,100px);line-height:.92;margin:0;letter-spacing:.01em;
   text-shadow:0 0 40px rgba(126,240,255,.35),0 4px 0 rgba(0,0,0,.25);text-wrap:balance}
-.logo span{color:var(--sun)}
+.logo .l2{color:var(--sun)}
 .tag{margin:12px auto 0;max-width:30ch;color:var(--muted);font-size:15px;line-height:1.5}
 .eyebrow{margin:0;font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--comet)}
 
@@ -160,7 +160,7 @@ body{background:var(--space-deep);color:var(--ink);font-family:var(--f-body);fon
   </div>
   <div class="logo-wrap">
     <p class="eyebrow" id="m-day">Day #1</p>
-    <h1 class="logo">Quỹ<br><span>Đạo</span></h1>
+    <h1 class="logo"><span id="logo1">Orbit</span><br><span id="logo2" class="l2">Hop</span></h1>
     <p class="tag" data-i18n="tag">Tap at the right moment to sling your comet from planet to planet. One new map a day, the same map for everyone.</p>
   </div>
   <div class="card">
@@ -273,6 +273,7 @@ const FD = "'Tektur', 'Exo 2', system-ui, sans-serif";   // font tiêu đề, d�
 const FB = "'Exo 2', system-ui, sans-serif";             // font chữ thường trên canvas
 const I18N = {
   en: {
+    name1: 'Orbit', name2: 'Hop', title: 'Orbit Hop',
     canvasAria: 'Game area: tap to launch the comet', muteAria: 'Toggle sound',
     tag: 'Tap at the right moment to sling your comet from planet to planet. One new map a day, the same map for everyone.',
     accept: 'Accept challenge', daily: 'Daily challenge', dailyOut: 'No tries left today',
@@ -305,7 +306,7 @@ const I18N = {
     noteOut: (n, best, s) => `All ${n} tries used today. Your daily score is locked at <b>${best}</b>. Keep going in free play: random maps, not counted for today. New map in ${s}.`,
     noteFree: best => `This is free play. Your daily score is still <b>${best}</b>.`,
     share: 'Share score', shareSub: 'challenge friends', backHome: 'Back to menu', gridAria: 'Jump history', copyAria: 'Result to copy',
-    shHeadFree: s => `🌠 QUỸ ĐẠO · Free play — ${s} pts`, shHead: (n, s) => `🌠 QUỸ ĐẠO #${n} — ${s} pts`,
+    shHeadFree: s => `🌠 ORBIT HOP · Free play — ${s} pts`, shHead: (n, s) => `🌠 ORBIT HOP #${n} — ${s} pts`,
     shLine: (p, z, zn, st) => `🪐 ${p} planets · Zone ${z} (${zn}) · 🔥 streak ${st}`, shRank: (r, n) => `🏆 Rank ${r}/${n} today`,
     shTitle: r => `Title: ${r}`, shTry: u => `Play it 👉 ${u}`, shBeat: u => `Beat my score 👉 ${u}`, shCode: c => `Challenge code: ${c}`,
     copied: 'Copied! Paste it in a chat to challenge your friends', copyManual: 'Select and copy the text below',
@@ -322,6 +323,7 @@ const I18N = {
     nameShort: 'Name needs at least 2 characters', nameSaved: 'Name saved', nameSavedNoSync: "Name saved, but the ranking hasn't updated yet"
   },
   vi: {
+    name1: 'Quỹ', name2: 'Đạo', title: 'Quỹ Đạo',
     canvasAria: 'Màn chơi: chạm để phóng sao chổi', muteAria: 'Tắt/bật âm thanh',
     tag: 'Chạm đúng lúc để phóng sao chổi qua từng hành tinh. Mỗi ngày một bản đồ mới, ai cũng chơi chung một bản đồ.',
     accept: 'Nhận thách đấu', daily: 'Thử thách hôm nay', dailyOut: 'Hết lượt hôm nay',
@@ -381,6 +383,7 @@ function t(key, ...args) {
 // Điền chữ cho các phần tử tĩnh có data-i18n (chữ), data-i18n-ph (placeholder), data-i18n-aria (aria-label)
 function applyLang() {
   document.documentElement.lang = lang;
+  document.title = t('title'); $('logo1').textContent = t('name1'); $('logo2').textContent = t('name2');
   for (const el of document.querySelectorAll('[data-i18n]')) el.textContent = t(el.dataset.i18n);
   for (const el of document.querySelectorAll('[data-i18n-ph]')) el.placeholder = t(el.dataset.i18nPh);
   for (const el of document.querySelectorAll('[data-i18n-aria]')) el.setAttribute('aria-label', t(el.dataset.i18nAria));
@@ -405,10 +408,31 @@ const randSeed = () => (Math.random() * 4294967296) >>> 0;
 function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 
 /* ---------- audio ---------- */
-let ac = null, master = null, nbuf = null;
+let ac = null, master = null, nbuf = null, echoIn = null, DIST = null;
 let muted = store.get('qd-mute', false);
+// Dựng chuỗi xử lý âm thanh trên ngữ cảnh `ac` hiện tại (tách riêng để còn kiểm thử được bằng ngữ cảnh ngoại tuyến)
+function wireAudio() {
+  master = ac.createGain(); master.gain.value = 0.55;
+  // nén nhẹ ở đầu ra để tiếng nổ nhiều lớp không bị vỡ tiếng
+  const comp = ac.createDynamicsCompressor();
+  comp.threshold.value = -16; comp.ratio.value = 5; comp.attack.value = 0.003; comp.release.value = 0.2;
+  master.connect(comp); comp.connect(ac.destination);
+  // nhánh vọng: delay có phản hồi, lọc bớt tiếng cao, cho cảm giác không gian rộng
+  echoIn = ac.createGain();
+  const dl = ac.createDelay(0.6), fb = ac.createGain(), lp = ac.createBiquadFilter();
+  dl.delayTime.value = 0.21; fb.gain.value = 0.36; lp.type = 'lowpass'; lp.frequency.value = 1400;
+  echoIn.connect(dl); dl.connect(lp); lp.connect(fb); fb.connect(dl); lp.connect(master);
+  // đường cong méo tiếng (tanh) làm tiếng trầm dày hơn
+  DIST = new Float32Array(512);
+  for (let i = 0; i < 512; i++) DIST[i] = Math.tanh((i / 255.5 - 1) * 2.6);
+}
 function audio() {
-  if (!ac) { try { ac = new (window.AudioContext || window.webkitAudioContext)(); master = ac.createGain(); master.gain.value = 0.55; master.connect(ac.destination); } catch (e) { ac = null; } }
+  if (!ac) {
+    try {
+      ac = new (window.AudioContext || window.webkitAudioContext)();
+      wireAudio();
+    } catch (e) { ac = null; }
+  }
   if (ac && ac.state === 'suspended') ac.resume();
 }
 function tone(f, dur, type = 'sine', vol = 0.2, slide = 0, delay = 0) {
@@ -428,6 +452,39 @@ function noise(dur, vol, f0, f1, type = 'bandpass') {
   g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
   s.connect(fl).connect(g).connect(master); s.start(t); s.stop(t + dur + 0.02);
 }
+// Một lớp nhiễu trắng qua bộ lọc quét tần số, bắt đầu tại thời điểm t. echo = lượng gửi sang nhánh vọng.
+function burst(t, dur, vol, f0, f1, type, echo = 0, q = 0.8) {
+  if (!nbuf) { nbuf = ac.createBuffer(1, ac.sampleRate, ac.sampleRate); const d = nbuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; }
+  const src = ac.createBufferSource(), fl = ac.createBiquadFilter(), g = ac.createGain();
+  src.buffer = nbuf; src.loop = true;
+  fl.type = type; fl.Q.value = q; fl.frequency.setValueAtTime(f0, t); fl.frequency.exponentialRampToValueAtTime(f1, t + dur);
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.008);
+  g.gain.exponentialRampToValueAtTime(vol * 0.3, t + dur * 0.4); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);   // giảm nhanh rồi kéo đuôi
+  src.connect(fl); fl.connect(g); g.connect(master);
+  if (echo) { const e = ac.createGain(); e.gain.value = echo; g.connect(e); e.connect(echoIn); }
+  src.start(t, Math.random() * 0.4); src.stop(t + dur + 0.05);
+}
+// Tiếng nổ nhiều lớp: tiếng "rắc" mở đầu, tiếng ầm trầm, cú đấm tầm trung, thân nổ quét tần số có vọng, rồi mảnh vỡ lách tách.
+function boom(kind) {
+  if (!ac || muted) return;
+  const t = ac.currentTime + 0.005;
+  burst(t, 0.07, 0.5, 7000, 3000, 'highpass');
+  const o = ac.createOscillator(), ws = ac.createWaveShaper(), g = ac.createGain();
+  o.type = 'sine'; o.frequency.setValueAtTime(160, t); o.frequency.exponentialRampToValueAtTime(34, t + 0.55);
+  ws.curve = DIST;
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.85, t + 0.012); g.gain.exponentialRampToValueAtTime(0.3, t + 0.4); g.gain.exponentialRampToValueAtTime(0.0001, t + 1.4);
+  o.connect(ws); ws.connect(g); g.connect(master); o.start(t); o.stop(t + 1.45);
+  // cú đấm tầm trung: loa điện thoại không phát được âm trầm, lớp này giúp vẫn nghe rõ tiếng nổ
+  const o2 = ac.createOscillator(), g2 = ac.createGain();
+  o2.type = 'triangle'; o2.frequency.setValueAtTime(320, t); o2.frequency.exponentialRampToValueAtTime(70, t + 0.22);
+  g2.gain.setValueAtTime(0.0001, t); g2.gain.exponentialRampToValueAtTime(0.4, t + 0.008); g2.gain.exponentialRampToValueAtTime(0.0001, t + 0.3);
+  o2.connect(g2); g2.connect(master); o2.start(t); o2.stop(t + 0.35);
+  burst(t, 1.3, 0.6, 3400, 110, 'lowpass', 0.5);
+  burst(t + 0.05, 1.7, 0.3, 500, 60, 'lowpass', 0.5);                 // tiếng ầm kéo dài phía sau
+  burst(t + 0.02, 0.5, 0.25, 1800, 500, 'bandpass', 0.3, 0.6);
+  for (let i = 0; i < 10; i++) burst(t + 0.1 + Math.random() * 0.75, 0.025 + Math.random() * 0.05, 0.16 * (1 - i / 14), 1800 + Math.random() * 5000, 900, 'bandpass', 0.4, 4);
+  if (kind === 'hot') burst(t + 0.05, 1.0, 0.12, 5000, 9000, 'highpass');   // tiếng xèo khi bị sao lùn đỏ thiêu
+}
 const NOTES = [523.25, 587.33, 659.25, 783.99, 880, 1046.5, 1174.66, 1318.51, 1567.98, 1760, 2093];
 const sfx = {
   launch() { noise(0.16, 0.14, 700, 2600); tone(240, 0.14, 'sine', 0.07, 2.2); },
@@ -439,7 +496,7 @@ const sfx = {
   skip() { [0, 0.07, 0.14].forEach((d, i) => tone(NOTES[4 + i * 2], 0.25, 'triangle', 0.14, 0, d)); },
   worm() { tone(260, 0.55, 'sine', 0.16, 6); tone(520, 0.5, 'triangle', 0.08, 3, 0.06); noise(0.4, 0.1, 400, 3000); },
   tick() { tone(1500, 0.04, 'square', 0.035); },
-  die() { tone(170, 0.7, 'sawtooth', 0.11, 0.25); noise(0.55, 0.35, 900, 120, 'lowpass'); },
+  die(kind) { boom(kind); },
   win() { [0, 0.1, 0.2, 0.32].forEach((d, i) => tone(NOTES[3 + i * 2], 0.4, 'triangle', 0.15, 0, d)); }
 };
 function buzz(p) {
@@ -501,7 +558,7 @@ function newRun(seed, opts = {}) {
   const g = {
     rng: mulberry32(seed), planets: [], T: 0, cam: 0, score: 0, maxIdx: 0, streak: 0, bestStreak: 0, grid: [],
     trail: [], parts: [], rings: [], pops: [], shake: 0, auto: !!opts.auto, over: false, deadT: 0, shown: false,
-    minRatio: 9, target: opts.target || 0, beat: false, date: opts.date || 0, death: '', worms: [], lastWorm: 0, wormCount: 0,
+    minRatio: 9, target: opts.target || 0, beat: false, date: opts.date || 0, death: '', worms: [], lastWorm: 0, wormCount: 0, flash: 0,
     comet: { state: 'ready', p: 0, th: -Math.PI / 2, w: 2.3, t: 0, tAll: 1, rho0: 0, rhoEntry: 0, decay: 0, rho: 0, x: 0, y: 0, vx: 0, vy: 0, from: 0, ft: 0, nextTick: 0 }
   };
   ensure(g, 8);
@@ -574,9 +631,16 @@ function die(g, kind) {
   c.state = 'dead'; g.over = true;
   g.death = kind === 'lost' && g.minRatio < 1.35 ? 'near' : kind === 'crash' && g.planets[c.p].kind === 'hot' ? 'hot' : kind;
   g.grid.push('💥');
-  for (let i = 0; i < 40; i++) { const a = Math.random() * TAU, v = 40 + Math.random() * 280; spawn(g, c.x, c.y, Math.cos(a) * v, Math.sin(a) * v, 0.6 + Math.random() * 0.6, ['#ff8fb1', '#ffd66b', '#7ef0ff', '#ffffff'][i % 4], 3); }
-  g.shake = 16;
-  if (!g.auto) { sfx.die(); buzz([30, 40, 60]); }
+  // tia lửa nhanh bắn xa + mảnh vỡ chậm, hai vòng sóng xung kích và một chớp sáng
+  for (let i = 0; i < 70; i++) {
+    const a = Math.random() * TAU, fast = i < 24, v = fast ? 260 + Math.random() * 380 : 40 + Math.random() * 240;
+    spawn(g, c.x, c.y, Math.cos(a) * v, Math.sin(a) * v, 0.5 + Math.random() * (fast ? 0.4 : 0.9), fast ? '#fff3c4' : ['#ff8fb1', '#ffd66b', '#7ef0ff', '#ff9a4a'][i % 4], fast ? 2 : 3.4);
+  }
+  const at = { x: c.x, y: c.y };
+  g.rings.push({ r: 6, max: 160, life: 0, dur: 0.6, col: '#ffffff', p: at }, { r: 4, max: 90, life: 0, dur: 0.45, col: '#ffd66b', p: at });
+  g.flash = 1;
+  g.shake = 18;
+  if (!g.auto) { sfx.die(g.death); buzz([30, 40, 60]); }
 }
 
 function update(g, dt) {
@@ -625,6 +689,7 @@ function update(g, dt) {
   for (let i = g.rings.length - 1; i >= 0; i--) { const r = g.rings[i]; r.life += dt; if (r.life > r.dur) g.rings.splice(i, 1); }
   for (let i = g.pops.length - 1; i >= 0; i--) { const p = g.pops[i]; p.life += dt; if (p.life > p.dur + p.delay) g.pops.splice(i, 1); }
   g.shake *= Math.pow(0.02, dt);
+  g.flash *= Math.pow(0.0015, dt);
 
   // camera
   const ref = g.planets[c.state === 'fly' ? c.from : c.p];
@@ -755,6 +820,7 @@ function draw(g) {
   // planets
   for (let j = 0; j < g.planets.length; j++) {
     const P = g.planets[j];
+    if (P.y > bot + 800) P.sprite = null;
     if (P.y < top || P.y > bot) continue;
     drawPlanet(P, j < cur ? 0.5 : 1);
   }
@@ -812,8 +878,140 @@ function draw(g) {
     ctx.fillStyle = p.col; ctx.fillText(p.text, p.x, p.y - t * 30);
   }
   ctx.globalAlpha = 1;
+
+  // chớp sáng khi nổ (bỏ qua nếu người chơi bật giảm chuyển động)
+  if (g.flash > 0.02 && !reduceMotion) {
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.fillStyle = `rgba(255,236,210,${(0.3 * g.flash).toFixed(3)})`;
+    ctx.fillRect(0, 0, cssW, cssH);
+  }
 }
 
+/* ---------- planet art ---------- */
+// Mỗi hành tinh được vẽ chi tiết MỘT lần vào một canvas riêng (sprite), rồi mỗi khung hình chỉ dán lại ảnh đó:
+// đẹp hơn mà không chậm đi. Chi tiết lấy từ một bộ số ngẫu nhiên riêng tính theo vị trí hành tinh,
+// không đụng tới bộ số sinh bản đồ, nên bản đồ mỗi ngày giữ nguyên.
+function planetSprite(P) {
+  const k = dpr * scale;
+  if (P.sprite && P.sprite.k === k) return P.sprite;
+  const rnd = mulberry32((Math.imul(Math.round(P.bx * 13), 73856093) ^ Math.imul(Math.round(-P.y), 19349663) ^ Math.round(P.r * 977)) >>> 0);
+  const pickStyle = rnd();
+  const style = P.kind === 'hot' ? 'lava' : P.kind === 'giant' ? 'gas' : pickStyle < 0.36 ? 'rock' : pickStyle < 0.7 ? 'terra' : 'gas';
+  const R = P.r * k, pad = Math.ceil(R * 0.3) + 3, size = Math.ceil((R + pad) * 2), c = size / 2;
+  const cvs = document.createElement('canvas'); cvs.width = cvs.height = size;
+  const x = cvs.getContext('2d');
+  const lite = P.pal[0], mid = P.pal[1], dark = P.pal[2];
+
+  // quầng khí quyển quanh hành tinh
+  const halo = x.createRadialGradient(c, c, R * 0.9, c, c, R + pad);
+  halo.addColorStop(0, hexA(style === 'lava' ? '#ff9a4a' : lite, 0.42)); halo.addColorStop(1, hexA(lite, 0));
+  x.fillStyle = halo; x.beginPath(); x.arc(c, c, R + pad, 0, TAU); x.fill();
+
+  x.save(); x.beginPath(); x.arc(c, c, R, 0, TAU); x.clip();
+  // nền
+  if (style === 'lava') { const b = x.createRadialGradient(c, c, 0, c, c, R); b.addColorStop(0, '#6b2414'); b.addColorStop(1, '#2b0a0a'); x.fillStyle = b; }
+  else { const b = x.createRadialGradient(c - R * 0.3, c - R * 0.35, R * 0.1, c, c, R * 1.05); b.addColorStop(0, mixA(lite, mid, 0.35, 1)); b.addColorStop(0.6, mid); b.addColorStop(1, mixA(mid, dark, 0.6, 1)); x.fillStyle = b; }
+  x.fillRect(0, 0, size, size);
+
+  if (style === 'gas') {
+    // hành tinh khí: các dải mây lượn sóng và một mắt bão
+    x.save(); x.translate(c, c); x.rotate(P.tilt * 0.6);
+    let y0 = -R * 1.1, i = 0;
+    while (y0 < R * 1.1) {
+      const h = R * (0.1 + rnd() * 0.2), amp = R * (0.015 + rnd() * 0.035), f = (2 + rnd() * 3) / R, ph = rnd() * TAU;
+      x.fillStyle = i % 2 ? mixA(lite, '#ffffff', 0.25, 0.26 + rnd() * 0.2) : mixA(dark, mid, 0.3, 0.3 + rnd() * 0.25);
+      x.beginPath(); x.moveTo(-R * 1.1, y0);
+      for (let px = -R * 1.1; px <= R * 1.1; px += R / 8) x.lineTo(px, y0 + Math.sin(px * f + ph) * amp);
+      for (let px = R * 1.1; px >= -R * 1.1; px -= R / 8) x.lineTo(px, y0 + h + Math.sin(px * f + ph + 1.3) * amp);
+      x.closePath(); x.fill();
+      y0 += h * (0.9 + rnd() * 0.5); i++;
+    }
+    const sx = (rnd() - 0.5) * R * 0.9, sy = (rnd() - 0.2) * R * 0.6, sw = R * (0.16 + rnd() * 0.12);
+    x.fillStyle = mixA(dark, mid, 0.2, 0.55); x.beginPath(); x.ellipse(sx, sy, sw, sw * 0.55, 0, 0, TAU); x.fill();
+    x.strokeStyle = hexA(lite, 0.6); x.lineWidth = Math.max(1, R * 0.03); x.beginPath(); x.ellipse(sx, sy, sw * 0.7, sw * 0.33, 0, 0, TAU); x.stroke();
+    x.restore();
+  } else if (style === 'rock') {
+    // hành tinh đá: mảng tối lớn và các hố va chạm có gờ sáng, bóng đổ
+    for (let i = 0; i < 3; i++) {
+      const a = rnd() * TAU, d = rnd() * R * 0.6;
+      x.fillStyle = hexA(dark, 0.18); x.beginPath(); x.arc(c + Math.cos(a) * d, c + Math.sin(a) * d, R * (0.3 + rnd() * 0.25), 0, TAU); x.fill();
+    }
+    const n = 6 + Math.floor(rnd() * 5);
+    for (let i = 0; i < n; i++) {
+      const a = rnd() * TAU, d = Math.sqrt(rnd()) * R * 0.82, cr = R * (0.06 + rnd() * rnd() * 0.2), px = c + Math.cos(a) * d, py = c + Math.sin(a) * d;
+      x.fillStyle = hexA(dark, 0.45); x.beginPath(); x.arc(px, py, cr, 0, TAU); x.fill();
+      x.lineWidth = Math.max(1, cr * 0.22);
+      x.strokeStyle = hexA(lite, 0.6); x.beginPath(); x.arc(px, py, cr, -0.15 * Math.PI, 0.65 * Math.PI); x.stroke();          // vách hố đón sáng (dưới phải)
+      x.strokeStyle = 'rgba(8,9,31,0.35)'; x.beginPath(); x.arc(px, py, cr * 0.9, 0.85 * Math.PI, 1.65 * Math.PI); x.stroke();   // vách hố khuất sáng (trên trái)
+    }
+  } else if (style === 'terra') {
+    // hành tinh có lục địa, mũ băng hai cực và mây
+    for (let i = 0; i < 4; i++) {
+      const a = rnd() * TAU, d = rnd() * R * 0.7, bx = c + Math.cos(a) * d, by = c + Math.sin(a) * d, m = 5 + Math.floor(rnd() * 4), br = R * (0.14 + rnd() * 0.14);
+      x.fillStyle = mixA(dark, mid, 0.3, 0.72); x.beginPath();
+      for (let j = 0; j < m; j++) {
+        const aa = rnd() * TAU, dd = rnd() * br * 1.3, rr = br * (0.5 + rnd() * 0.7), ex = bx + Math.cos(aa) * dd, ey = by + Math.sin(aa) * dd * 0.7;
+        x.moveTo(ex + rr, ey); x.arc(ex, ey, rr, 0, TAU);
+      }
+      x.fill();
+    }
+    x.fillStyle = 'rgba(255,255,255,0.75)';
+    x.beginPath(); x.ellipse(c, c - R * 0.98, R * 0.55, R * 0.2, 0, 0, TAU); x.fill();
+    x.beginPath(); x.ellipse(c, c + R * 0.99, R * 0.45, R * 0.16, 0, 0, TAU); x.fill();
+    x.strokeStyle = 'rgba(255,255,255,0.42)'; x.lineCap = 'round';
+    for (let i = 0; i < 5; i++) {
+      const yy = c + (rnd() - 0.5) * R * 1.5, xx = c + (rnd() - 0.5) * R * 1.2, w = R * (0.25 + rnd() * 0.5);
+      x.lineWidth = R * (0.05 + rnd() * 0.06);
+      x.beginPath(); x.moveTo(xx - w / 2, yy); x.quadraticCurveTo(xx, yy - R * 0.1 * (rnd() - 0.3), xx + w / 2, yy + R * 0.04); x.stroke();
+    }
+  } else {
+    // sao lùn đỏ: vỏ tối, vết nứt và hồ dung nham phát sáng
+    const cracks = [];
+    for (let i = 0; i < 7; i++) {
+      const a = rnd() * TAU, d0 = rnd() * R * 0.5;
+      let px = c + Math.cos(a) * d0, py = c + Math.sin(a) * d0, dir = rnd() * TAU;
+      const pts = [[px, py]], steps = 4 + Math.floor(rnd() * 4);
+      for (let st = 0; st < steps; st++) { dir += (rnd() - 0.5) * 1.4; px += Math.cos(dir) * R * 0.2; py += Math.sin(dir) * R * 0.2; pts.push([px, py]); }
+      cracks.push(pts);
+    }
+    x.lineCap = 'round'; x.lineJoin = 'round';
+    const strokeAll = (col, w) => { x.strokeStyle = col; x.lineWidth = w; for (const pts of cracks) { x.beginPath(); pts.forEach((q, i) => (i ? x.lineTo(q[0], q[1]) : x.moveTo(q[0], q[1]))); x.stroke(); } };
+    strokeAll('rgba(255,110,40,0.35)', R * 0.16); strokeAll('rgba(255,170,60,0.8)', R * 0.07); strokeAll('#fff3c4', R * 0.025);
+    for (let i = 0; i < 4; i++) {
+      const a = rnd() * TAU, d = rnd() * R * 0.75, px = c + Math.cos(a) * d, py = c + Math.sin(a) * d, rr = R * (0.14 + rnd() * 0.18);
+      const gl = x.createRadialGradient(px, py, 0, px, py, rr);
+      gl.addColorStop(0, 'rgba(255,240,180,0.95)'); gl.addColorStop(0.4, 'rgba(255,150,50,0.7)'); gl.addColorStop(1, 'rgba(255,90,30,0)');
+      x.fillStyle = gl; x.beginPath(); x.arc(px, py, rr, 0, TAU); x.fill();
+    }
+  }
+
+  // nửa tối: ánh sáng chiếu từ phía trên bên trái
+  const sh = x.createRadialGradient(c - R * 0.45, c - R * 0.5, R * 0.55, c - R * 0.1, c - R * 0.1, R * 1.25);
+  sh.addColorStop(0, 'rgba(8,9,31,0)'); sh.addColorStop(1, `rgba(8,9,31,${style === 'lava' ? 0.4 : 0.66})`);
+  x.fillStyle = sh; x.fillRect(0, 0, size, size);
+  // viền sáng của khí quyển
+  const rim = x.createRadialGradient(c, c, R * 0.82, c, c, R);
+  rim.addColorStop(0, hexA(lite, 0)); rim.addColorStop(1, hexA(lite, 0.3));
+  x.fillStyle = rim; x.fillRect(0, 0, size, size);
+  // đốm phản sáng
+  const sp = x.createRadialGradient(c - R * 0.42, c - R * 0.46, 0, c - R * 0.42, c - R * 0.46, R * 0.5);
+  sp.addColorStop(0, 'rgba(255,255,255,0.38)'); sp.addColorStop(1, 'rgba(255,255,255,0)');
+  x.fillStyle = sp; x.fillRect(0, 0, size, size);
+  x.restore();
+
+  P.sprite = { cvs, size, k, style };
+  return P.sprite;
+}
+// Vành đai: ba dải ê-líp; nửa sau vẽ trước hành tinh, nửa trước vẽ đè lên
+function ringArc(P, a0, a1, front) {
+  const r = P.r;
+  ctx.save(); ctx.translate(P.x, P.y); ctx.rotate(P.tilt);
+  for (const [m, al, w] of [[1.42, 0.5, 2.2], [1.62, 0.8, 3.2], [1.8, 0.4, 1.6]]) {
+    ctx.beginPath(); ctx.ellipse(0, 0, r * m, r * m * 0.24, 0, a0, a1);
+    ctx.strokeStyle = hexA(P.pal[0], al * (front ? 1 : 0.55)); ctx.lineWidth = w * r / 30; ctx.stroke();
+  }
+  ctx.restore();
+}
 function drawPlanet(P, alpha) {
   ctx.globalAlpha = alpha;
   const { x, y, r } = P;
@@ -822,22 +1020,23 @@ function drawPlanet(P, alpha) {
     ag.addColorStop(0, `rgba(255,120,50,${0.55 * pu})`); ag.addColorStop(1, 'rgba(255,120,50,0)');
     ctx.fillStyle = ag; ctx.beginPath(); ctx.arc(x, y, r * 2, 0, TAU); ctx.fill();
   }
-  if (P.ring) { ctx.save(); ctx.translate(x, y); ctx.rotate(P.tilt); ctx.beginPath(); ctx.ellipse(0, 0, r * 1.75, r * 0.42, 0, Math.PI, TAU); ctx.strokeStyle = hexA(P.pal[0], 0.6); ctx.lineWidth = 3; ctx.stroke(); ctx.restore(); }
-  const gr = ctx.createRadialGradient(x - r * 0.35, y - r * 0.4, r * 0.1, x, y, r);
-  gr.addColorStop(0, P.pal[0]); gr.addColorStop(0.55, P.pal[1]); gr.addColorStop(1, P.pal[2]);
-  ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fill();
-  ctx.fillStyle = hexA(P.pal[2], 0.35);
-  for (const k of P.craters) { ctx.beginPath(); ctx.arc(x + Math.cos(k.a) * k.dd * r, y + Math.sin(k.a) * k.dd * r, k.s * r, 0, TAU); ctx.fill(); }
-  if (P.ring) { ctx.save(); ctx.translate(x, y); ctx.rotate(P.tilt); ctx.beginPath(); ctx.ellipse(0, 0, r * 1.75, r * 0.42, 0, 0, Math.PI); ctx.strokeStyle = hexA(P.pal[0], 0.85); ctx.lineWidth = 3; ctx.stroke(); ctx.restore(); }
+  const ringed = P.ring || P.kind === 'giant';
+  if (ringed) ringArc(P, Math.PI, TAU, false);
+  const s = planetSprite(P), d = s.size / s.k;
+  ctx.drawImage(s.cvs, x - d / 2, y - d / 2, d, d);
+  if (ringed) ringArc(P, 0, Math.PI, true);
   ctx.globalAlpha = 1;
 }
 
 const hexCache = {};
-function hexA(hex, a) {
+function rgbOf(hex) {
   let rgb = hexCache[hex];
   if (!rgb) { const v = parseInt(hex.slice(1), 16); rgb = hexCache[hex] = [(v >> 16) & 255, (v >> 8) & 255, v & 255]; }
-  return `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${a.toFixed(3)})`;
+  return rgb;
 }
+function hexA(hex, a) { const rgb = rgbOf(hex); return `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${a.toFixed(3)})`; }
+// pha hai màu theo tỉ lệ k (0 = màu thứ nhất), độ đục a
+function mixA(h1, h2, k, a) { const p = rgbOf(h1), q = rgbOf(h2); return `rgba(${Math.round(lerp(p[0], q[0], k))},${Math.round(lerp(p[1], q[1], k))},${Math.round(lerp(p[2], q[2], k))},${a.toFixed(3)})`; }
 
 /* ---------- sizing ---------- */
 function resize() {
@@ -1190,6 +1389,23 @@ function frame(now) {
 requestAnimationFrame(frame);
 window.__qd = {
   get game() { return game; }, get attract() { return attract; }, launch: () => game && launch(game),
+  // kết xuất tiếng nổ ra bộ đệm (không phát ra loa) để đo: đỉnh, độ to theo thời gian, độ "sáng" đầu và cuối
+  renderBoom(kind) {
+    const saved = [ac, master, nbuf, echoIn, muted];
+    const off = new OfflineAudioContext(1, 44100 * 2, 44100);
+    ac = off; nbuf = null; muted = false; wireAudio(); boom(kind);
+    [ac, master, nbuf, echoIn, muted] = saved;
+    return off.startRendering().then(buf => {
+      const d = buf.getChannelData(0), win = 4410, rms = [], zc = [];
+      let peak = 0;
+      for (let i = 0; i < d.length; i += win) {
+        let e = 0, z = 0;
+        for (let j = i; j < i + win && j < d.length; j++) { e += d[j] * d[j]; if (j > i && (d[j] >= 0) !== (d[j - 1] >= 0)) z++; peak = Math.max(peak, Math.abs(d[j])); }
+        rms.push(+(10 * Math.log10(e / win + 1e-12)).toFixed(1)); zc.push(z);
+      }
+      return { peak: +peak.toFixed(3), rmsDbPer100ms: rms, zeroCrossPer100ms: zc };
+    });
+  },
   // đo số giây (thời gian trong game) được đứng yên ở hành tinh thứ idx trước khi rơi
   lifeTest(seed, idx) {
     const g = newRun(seed, { auto: true }); g.cam = 0; let steps = 0;

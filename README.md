@@ -1,4 +1,4 @@
-# Quỹ Đạo
+# Orbit Hop (Quỹ Đạo)
 
 Game một chạm chạy trên trình duyệt: phóng sao chổi qua từng hành tinh. Mỗi ngày một bản đồ mới, ai cũng chơi chung một bản đồ.
 
