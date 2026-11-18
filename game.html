@@ -125,7 +125,18 @@ body{background:var(--space-deep);color:var(--ink);font-family:var(--f-body);fon
 .tabs button:focus-visible{outline:3px solid var(--comet);outline-offset:2px}
 .board-sub{margin:0;font-size:13px;color:var(--muted);text-align:center}
 .rows{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px;flex:1 1 auto;min-height:0;overflow-y:auto}
-.rows li,.row-me{display:grid;grid-template-columns:34px 1fr auto;align-items:center;gap:10px;padding:8px 10px;border-radius:12px;background:rgba(255,255,255,.04)}
+.rows li,.row-me{display:grid;grid-template-columns:34px 1fr auto auto;align-items:center;gap:10px;padding:8px 10px;border-radius:12px;background:rgba(255,255,255,.04)}
+.row-more{appearance:none;border:0;background:none;color:var(--muted);width:32px;height:32px;border-radius:10px;cursor:pointer;display:grid;place-items:center;margin-right:-6px}
+.row-more svg{width:18px;height:18px}
+.row-more:focus-visible{outline:3px solid var(--comet);outline-offset:1px}
+.rules{margin:0;font-size:12px;line-height:1.4;color:var(--muted)}
+.rules a{color:var(--sun)}
+.board-hidden{margin:0;font-size:12px;color:var(--muted);text-align:center}
+.sheet{display:flex;flex-direction:column;gap:8px;padding:14px;border-radius:16px;background:rgba(0,0,0,.35);border:1px solid var(--line)}
+.sheet h3{margin:0 0 2px;font-family:var(--f-display);font-weight:800;font-size:18px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sheet p{margin:0 0 4px;font-size:13px;line-height:1.4;color:var(--muted)}
+.btn.plain{font-size:16px;padding:11px 14px 9px}
+.btn.danger{font-size:16px;padding:11px 14px 9px;background:rgba(255,143,177,.16);box-shadow:inset 0 0 0 1px rgba(255,143,177,.55);color:var(--flare)}
 .rows li.me,.row-me{background:rgba(126,240,255,.14);box-shadow:inset 0 0 0 1px rgba(126,240,255,.5)}
 .rk{font-family:var(--f-display);font-weight:800;font-size:17px;text-align:center;color:var(--muted);font-variant-numeric:tabular-nums}
 .rk.r1{color:var(--sun)}.rk.r2{color:#d7dbe8}.rk.r3{color:#e8a36b}
@@ -202,6 +213,7 @@ body{background:var(--space-deep);color:var(--ink);font-family:var(--f-body);fon
         <input id="name-input" type="text" maxlength="16" data-i18n-ph="namePh" placeholder="Your name" autocomplete="nickname" autocapitalize="words" enterkeyhint="done" data-i18n-aria="nameAria" aria-label="Name shown on the ranking">
         <button class="btn primary small" type="submit" data-i18n="joinBoard">Submit</button>
       </form>
+      <p class="rules" id="o-rules" hidden><span data-i18n="nameRules">Names are public. Offensive names are removed.</span> <a href="https://vunguyenitcontact.github.io/quy-dao/privacy.html#rules" target="_blank" rel="noopener" data-i18n="rulesLink">Rules</a></p>
       <button class="link" id="b-board2" type="button" data-i18n="viewBoard">View ranking</button>
     </div>
     <div class="row">
@@ -228,11 +240,20 @@ body{background:var(--space-deep);color:var(--ink);font-family:var(--f-body);fon
     <ol class="rows" id="bd-rows"></ol>
     <div class="row-me" id="bd-me" hidden></div>
     <p class="board-state" id="bd-state" hidden></p>
+    <p class="board-hidden" id="bd-hidden" hidden></p>
+    <div class="sheet" id="bd-sheet" hidden>
+      <h3 id="sh-name"></h3>
+      <p data-i18n="sheetHint">Report a name that is offensive, or hide this player on your device.</p>
+      <button class="btn danger" id="sh-report" type="button" data-i18n="sheetReport">Report this name</button>
+      <button class="btn plain" id="sh-hide" type="button" data-i18n="sheetHide">Hide this player</button>
+      <button class="link" id="sh-cancel" type="button" data-i18n="cancel">Cancel</button>
+    </div>
     <div class="board-foot"><span id="bd-name"></span><button class="link" id="b-rename" type="button">Change name</button></div>
     <form class="field" id="bd-nameform" hidden>
       <input id="rename-input" type="text" maxlength="16" data-i18n-ph="namePh" placeholder="Your name" autocomplete="nickname" autocapitalize="words" enterkeyhint="done" data-i18n-aria="nameAria" aria-label="Name shown on the ranking">
       <button class="btn primary small" type="submit" data-i18n="save">Save</button>
     </form>
+    <p class="rules"><span data-i18n="nameRules">Names are public. Offensive names are removed.</span> <a href="https://vunguyenitcontact.github.io/quy-dao/privacy.html#rules" target="_blank" rel="noopener" data-i18n="rulesLink">Rules</a></p>
   </div>
 </div>
 
@@ -320,6 +341,11 @@ const I18N = {
     bdEmptyToday: 'Nobody is on the board yet today. Play the Daily challenge to be first.', bdEmpty: 'No scores here yet.', bdFail: "Couldn't load the ranking. ",
     yourName: n => `Your name: ${n}`, noName: "You haven't set a name", rename: 'Change name', setName: 'Set name', save: 'Save', you: ' (you)',
     rowPlanets: n => `${n} ${n === 1 ? 'planet' : 'planets'}`, rowDay: d => ` · ${d}`,
+    rowMore: n => `Options for ${n}`, sheetHint: 'Report a name that is offensive, or hide this player on your device.',
+    sheetReport: 'Report this name', sheetHide: 'Hide this player', cancel: 'Cancel',
+    reported: 'Reported. Thank you. We review reports within 24 hours.', reportFail: "Couldn't send the report. Please try again.",
+    hiddenOne: 'Player hidden on this device', hiddenCount: n => `${n} hidden on this device. `, showAll: 'Show all',
+    nameRules: 'Names are public. Offensive names are removed.', rulesLink: 'Rules', nameBad: 'That name is not allowed. Please choose another.',
     nameShort: 'Name needs at least 2 characters', nameSaved: 'Name saved', nameSavedNoSync: "Name saved, but the ranking hasn't updated yet"
   },
   vi: {
@@ -370,6 +396,11 @@ const I18N = {
     bdEmptyToday: 'Chưa ai lên bảng hôm nay. Chơi Thử thách hôm nay để là người đầu tiên.', bdEmpty: 'Chưa có điểm nào ở đây.', bdFail: 'Không tải được bảng xếp hạng. ',
     yourName: n => `Tên của bạn: ${n}`, noName: 'Bạn chưa đặt tên', rename: 'Đổi tên', setName: 'Đặt tên', save: 'Lưu', you: ' (bạn)',
     rowPlanets: n => `${n} hành tinh`, rowDay: d => ` · ngày ${d}`,
+    rowMore: n => `Tuỳ chọn cho ${n}`, sheetHint: 'Báo cáo tên phản cảm, hoặc ẩn người chơi này trên máy bạn.',
+    sheetReport: 'Báo cáo tên này', sheetHide: 'Ẩn người chơi này', cancel: 'Huỷ',
+    reported: 'Đã báo cáo. Cảm ơn bạn. Báo cáo được xem trong vòng 24 giờ.', reportFail: 'Chưa gửi được báo cáo. Thử lại nhé.',
+    hiddenOne: 'Đã ẩn người chơi này trên máy bạn', hiddenCount: n => `Đang ẩn ${n} người trên máy này. `, showAll: 'Hiện lại',
+    nameRules: 'Tên hiện công khai. Tên phản cảm sẽ bị gỡ.', rulesLink: 'Quy định', nameBad: 'Tên này không được phép. Hãy chọn tên khác.',
     nameShort: 'Tên cần ít nhất 2 ký tự', nameSaved: 'Đã lưu tên', nameSavedNoSync: 'Đã lưu tên, nhưng chưa cập nhật được lên bảng'
   }
 };
@@ -1227,7 +1258,7 @@ function rpc(fn, args) {
     method: 'POST', headers: { 'Content-Type': 'application/json', apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY },
     body: JSON.stringify(args), signal: ctl ? ctl.signal : undefined
   }).then(r => r.json().catch(() => null).then(j => {
-    if (!r.ok) { const e = new Error((j && j.message) || 'Máy chủ báo lỗi'); e.server = r.status >= 400 && r.status < 500; throw e; }
+    if (!r.ok) { const e = new Error((j && j.message) || 'Máy chủ báo lỗi'); e.server = r.status >= 400 && r.status < 500; e.code = j && j.code; throw e; }
     return j;
   })).finally(() => clearTimeout(timer));
 }
@@ -1259,8 +1290,8 @@ function showRankBox(g) {
   const box = $('o-rankbox'), form = $('o-nameform');
   if (!LB_ON || mode !== 'daily') { box.hidden = true; return; }
   box.hidden = false;
-  if (!getName()) { form.hidden = false; $('o-rankmsg').textContent = t('lbNeedName'); return; }
-  form.hidden = true;
+  if (!getName()) { form.hidden = false; $('o-rules').hidden = false; $('o-rankmsg').textContent = t('lbNeedName'); return; }
+  form.hidden = true; $('o-rules').hidden = true;
   sendRun(g);
 }
 function sendRun(g) {
@@ -1273,6 +1304,11 @@ function sendRun(g) {
     msg.innerHTML = t('lbRank', g.rank, g.rankTotal) + (Number(b.me.score) > g.score ? t('lbYourBest', Number(b.me.score)) : '');
   }).catch(err => {
     if (game !== g) return;
+    if (err && err.code === 'QD001') {          // tên không được phép: bỏ tên đó, cho nhập lại
+      store.set('qd-name', ''); msg.textContent = t('nameBad');
+      $('o-nameform').hidden = false; $('o-rules').hidden = false; $('name-input').value = ''; $('name-input').focus();
+      return;
+    }
     // lời báo lỗi của máy chủ viết bằng tiếng Việt, nên chỉ hiện nguyên văn khi đang ở tiếng Việt
     msg.textContent = err && err.server ? (lang === 'vi' ? err.message + '. ' : t('lbRejected')) : t('lbSendFail');
     msg.append(linkBtn(t('retryLink'), () => sendRun(g)));
@@ -1300,12 +1336,25 @@ function rowEl(tag, r, isMe) {
   const sm = document.createElement('small'); sm.textContent = t('rowPlanets', Number(r.planets)) + (r.day ? t('rowDay', fmtDate(Number(r.day))) : ''); nm.append(sm);
   const sc = document.createElement('span'); sc.className = 'sc'; sc.textContent = Number(r.score);
   el.append(rk, nm, sc);
+  if (!isMe && r.key && tag === 'li') {
+    const more = document.createElement('button'); more.type = 'button'; more.className = 'row-more'; more.setAttribute('aria-label', t('rowMore', r.name));
+    more.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>';
+    more.addEventListener('click', () => openSheet(r));
+    el.append(more);
+  }
   return el;
 }
+// Báo cáo và ẩn người chơi. Danh sách ẩn lưu trên máy này; báo cáo gửi lên máy chủ (đủ 3 báo cáo thì tên tự ẩn với mọi người).
+const getBlocked = () => { const b = store.get('qd-blocked', []); return Array.isArray(b) ? b : []; };
+let sheetRow = null;
+function openSheet(r) { sheetRow = r; $('sh-name').textContent = r.name; $('bd-sheet').hidden = false; $('sh-report').focus({ preventScroll: true }); $('bd-sheet').scrollIntoView({ block: 'nearest' }); }
+function closeSheet() { sheetRow = null; $('bd-sheet').hidden = true; }
+function blockKey(key) { const b = getBlocked(); if (!b.includes(key)) { b.push(key); store.set('qd-blocked', b.slice(-200)); } }
 function loadBoard() {
   const req = ++boardReq, rows = $('bd-rows'), st = $('bd-state'), me = $('bd-me'), sub = $('bd-sub');
   const head = boardTab === 'today' ? t('bdToday', dayNo(TODAY), fmtDate(TODAY)) : boardTab === 'yday' ? t('bdYday', fmtDate(ydayOf())) : t('bdAll');
   rows.textContent = ''; me.hidden = true; st.hidden = false; st.textContent = t('loading'); sub.textContent = head;
+  $('bd-hidden').hidden = true; closeSheet();
   const p = boardTab === 'all' ? rpc('hall_of_fame', { p_player: playerId(), p_limit: 20 })
     : rpc('leaderboard', { p_day: boardTab === 'today' ? TODAY : ydayOf(), p_player: playerId(), p_limit: 20 });
   p.then(b => {
@@ -1315,7 +1364,10 @@ function loadBoard() {
     if (!top.length) { st.textContent = boardTab === 'today' ? t('bdEmptyToday') : t('bdEmpty'); return; }
     st.hidden = true;
     sub.textContent = head + t('bdPlayers', Number(b.total));
-    for (const r of top) rows.append(rowEl('li', r, !!r.me));
+    const blocked = getBlocked(), shown = top.filter(r => r.me || !blocked.includes(r.key)), nHidden = top.length - shown.length;
+    for (const r of shown) rows.append(rowEl('li', r, !!r.me));
+    const hid = $('bd-hidden'); hid.hidden = !nHidden;
+    if (nHidden) { hid.textContent = t('hiddenCount', nHidden); hid.append(linkBtn(t('showAll'), () => { store.set('qd-blocked', []); loadBoard(); })); }
     if (b.me && !top.some(r => r.me)) { me.replaceChildren(...rowEl('div', b.me, true).childNodes); me.hidden = false; }
   }).catch(() => {
     if (req !== boardReq) return;
@@ -1337,15 +1389,28 @@ if (LB_ON) {
   $('b-board-close').addEventListener('click', closeBoard);
   $('board').addEventListener('click', e => { if (e.target === $('board')) closeBoard(); });
   for (const b of document.querySelectorAll('#board [role=tab]')) b.addEventListener('click', () => setTab(b.dataset.tab));
-  $('o-nameform').addEventListener('submit', e => { e.preventDefault(); if (saveName($('name-input'))) { $('o-nameform').hidden = true; if (game) sendRun(game); } });
+  $('sh-cancel').addEventListener('click', closeSheet);
+  $('sh-hide').addEventListener('click', () => { if (!sheetRow) return; blockKey(sheetRow.key); toast(t('hiddenOne')); loadBoard(); });
+  $('sh-report').addEventListener('click', () => {
+    if (!sheetRow) return;
+    const key = sheetRow.key;
+    rpc('report_name', { p_key: key, p_reporter: playerId() })
+      .then(() => { blockKey(key); toast(t('reported')); loadBoard(); })      // người báo cáo cũng không còn thấy tên đó nữa
+      .catch(() => toast(t('reportFail')));
+  });
+  $('o-nameform').addEventListener('submit', e => { e.preventDefault(); if (saveName($('name-input'))) { $('o-nameform').hidden = true; $('o-rules').hidden = true; if (game) sendRun(game); } });
   $('b-rename').addEventListener('click', () => { const f = $('bd-nameform'); f.hidden = !f.hidden; if (!f.hidden) { $('rename-input').value = getName(); $('rename-input').focus(); } });
   $('bd-nameform').addEventListener('submit', e => {
     e.preventDefault();
+    const before = getName();
     if (!saveName($('rename-input'))) return;
     $('bd-nameform').hidden = true; boardFoot();
     const d = getDaily();
     // đã có điểm hôm nay thì gửi lại để tên mới hiện trên bảng
-    if (d.runs.length && d.bestPlanets != null) submitBest(null).then(() => { if (boardOpen) loadBoard(); if (state === 'over' && game && mode === 'daily') showRankBox(game); }).catch(() => toast(t('nameSavedNoSync')));
+    if (d.runs.length && d.bestPlanets != null) submitBest(null).then(() => { if (boardOpen) loadBoard(); if (state === 'over' && game && mode === 'daily') showRankBox(game); }).catch(err => {
+      if (err && err.code === 'QD001') { store.set('qd-name', before); boardFoot(); $('bd-nameform').hidden = false; toast(t('nameBad')); }
+      else toast(t('nameSavedNoSync'));
+    });
     else toast(t('nameSaved'));
   });
 } else $('m-row').style.gridTemplateColumns = '1fr';
