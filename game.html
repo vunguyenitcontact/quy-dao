@@ -1,9 +1,9 @@
 <title>Quỹ Đạo</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<meta name="description" content="Chạm đúng lúc để phóng sao chổi qua từng hành tinh. Mỗi ngày một bản đồ, ai cũng chơi cùng một bản đồ.">
+<meta name="description" content="Tap at the right moment to sling your comet from planet to planet. One new map a day, the same map for everyone.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Be+Vietnam+Pro:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;600;700&family=Tektur:wght@600;800&display=swap">
 <style>
 /* Layout: full-bleed canvas universe; HUD floats on top; menu = logo up top + control card at the bottom; result = centered card. Single deliberate night-sky look. */
 :root{
@@ -18,8 +18,9 @@
   --card:rgba(18,16,58,.74);
   --line:rgba(190,180,255,.2);
   --on-sun:#22154a;
-  --f-display:'Baloo 2', 'Arial Rounded MT Bold', system-ui, sans-serif;
-  --f-body:'Be Vietnam Pro', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  /* Tektur: nét vuông kiểu bảng điều khiển tàu vũ trụ, cho tiêu đề và số. Exo 2: chữ thường. Cả hai có đủ dấu tiếng Việt. */
+  --f-display:'Tektur', 'Exo 2', 'Avenir Next Condensed', 'Arial Narrow', system-ui, sans-serif;
+  --f-body:'Exo 2', system-ui, -apple-system, 'Segoe UI', sans-serif;
   color-scheme:dark;
 }
 [hidden]{display:none!important}
@@ -51,7 +52,11 @@ body{background:var(--space-deep);color:var(--ink);font-family:var(--f-body);fon
   -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);display:flex;flex-direction:column;gap:14px;box-shadow:0 20px 60px rgba(0,0,0,.35)}
 
 .logo-wrap{text-align:center;margin-top:6vh}
-.logo{font-family:var(--f-display);font-weight:800;font-size:clamp(64px,19vw,104px);line-height:.85;margin:0;letter-spacing:-.01em;
+.lang{position:absolute;top:calc(14px + env(safe-area-inset-top,0px));right:max(16px, env(safe-area-inset-right,0px));display:flex;gap:2px;padding:3px;border-radius:12px;background:rgba(18,16,58,.6);border:1px solid var(--line)}
+.lang button{appearance:none;border:0;border-radius:9px;background:none;color:var(--muted);font:800 13px var(--f-display);letter-spacing:.06em;padding:7px 10px 6px;cursor:pointer;min-width:40px}
+.lang button[aria-pressed="true"]{background:var(--comet);color:var(--on-sun)}
+.lang button:focus-visible{outline:3px solid var(--comet);outline-offset:2px}
+.logo{font-family:var(--f-display);font-weight:800;font-size:clamp(60px,18vw,100px);line-height:.92;margin:0;letter-spacing:.01em;
   text-shadow:0 0 40px rgba(126,240,255,.35),0 4px 0 rgba(0,0,0,.25);text-wrap:balance}
 .logo span{color:var(--sun)}
 .tag{margin:12px auto 0;max-width:30ch;color:var(--muted);font-size:15px;line-height:1.5}
@@ -140,94 +145,98 @@ body{background:var(--space-deep);color:var(--ink);font-family:var(--f-body);fon
 @media (max-height:640px){ .logo-wrap{margin-top:0} .how{display:none} #o-score{font-size:64px} }
 </style>
 
-<canvas id="cv" aria-label="Màn chơi Quỹ Đạo: chạm để phóng sao chổi"></canvas>
+<canvas id="cv" data-i18n-aria="canvasAria" aria-label="Game area: tap to launch the comet"></canvas>
 
 <div id="hud" hidden>
-  <div class="hud-l"><div id="h-mode"><b>Ngày #1</b></div><div id="h-sub"></div></div>
+  <div class="hud-l"><div id="h-mode"><b>Day #1</b></div><div id="h-sub"></div></div>
   <div class="hud-c"><div id="score">0</div><div id="combo"></div></div>
-  <div class="hud-r"><button class="icon-btn" id="b-mute2" aria-label="Tắt/bật âm thanh"></button></div>
+  <div class="hud-r"><button class="icon-btn" id="b-mute2" data-i18n-aria="muteAria" aria-label="Toggle sound"></button></div>
 </div>
 
 <div id="menu" class="overlay">
+  <div class="lang" role="group" aria-label="Language / Ngôn ngữ">
+    <button type="button" id="l-en" aria-pressed="true" aria-label="English">EN</button>
+    <button type="button" id="l-vi" aria-pressed="false" aria-label="Tiếng Việt">VI</button>
+  </div>
   <div class="logo-wrap">
-    <p class="eyebrow" id="m-day">Ngày #1</p>
+    <p class="eyebrow" id="m-day">Day #1</p>
     <h1 class="logo">Quỹ<br><span>Đạo</span></h1>
-    <p class="tag">Chạm đúng lúc để phóng sao chổi qua từng hành tinh. Mỗi ngày một bản đồ mới, ai cũng chơi chung một bản đồ.</p>
+    <p class="tag" data-i18n="tag">Tap at the right moment to sling your comet from planet to planet. One new map a day, the same map for everyone.</p>
   </div>
   <div class="card">
     <div id="m-challenge" class="challenge" hidden></div>
-    <button id="b-challenge" class="btn hot" hidden>Nhận thách đấu</button>
-    <button id="b-daily" class="btn primary">Thử thách hôm nay<small id="m-left">còn 3/3 lượt</small></button>
+    <button id="b-challenge" class="btn hot" hidden><span data-i18n="accept">Accept challenge</span></button>
+    <button id="b-daily" class="btn primary"><span id="m-daily">Daily challenge</span><small id="m-left">3/3 tries left</small></button>
     <div class="row" id="m-row">
-      <button id="b-free" class="btn">Chơi tự do<small>bản đồ ngẫu nhiên</small></button>
-      <button id="b-board" class="btn" hidden>Xếp hạng<small id="m-rank">top hôm nay</small></button>
+      <button id="b-free" class="btn"><span data-i18n="free">Free play</span><small data-i18n="freeSub">random map</small></button>
+      <button id="b-board" class="btn" hidden><span data-i18n="board">Ranking</span><small id="m-rank">today's top</small></button>
     </div>
     <ul class="how">
-      <li><b>Chạm</b>để rời quỹ đạo</li>
-      <li><b>Bay</b>vào vùng hút hành tinh kế</li>
-      <li><b>Canh giờ</b>phóng trước khi vòng đếm hết</li>
+      <li><b data-i18n="how1t">Tap</b><span data-i18n="how1">to leave orbit</span></li>
+      <li><b data-i18n="how2t">Fly</b><span data-i18n="how2">into the next planet's pull</span></li>
+      <li><b data-i18n="how3t">Hurry</b><span data-i18n="how3">launch before the ring runs out</span></li>
     </ul>
     <p class="best" id="m-best"></p>
-    <button class="link" id="b-mute">Âm thanh: bật</button>
+    <button class="link" id="b-mute">Sound: on</button>
   </div>
 </div>
 
 <div id="over" class="overlay" hidden>
   <div class="card result">
-    <p class="eyebrow" id="o-ctx">Ngày #1</p>
-    <span class="badge" id="o-new" hidden>KỶ LỤC MỚI</span>
-    <div class="big"><span id="o-score">0</span><small>điểm</small></div>
+    <p class="eyebrow" id="o-ctx">Day #1</p>
+    <span class="badge" id="o-new" data-i18n="newRecord" hidden>NEW BEST</span>
+    <div class="big"><span id="o-score">0</span><small data-i18n="pts">pts</small></div>
     <p class="rank" id="o-rank"></p>
     <p class="reason" id="o-reason"></p>
     <p class="vs" id="o-vs" hidden></p>
     <p class="note" id="o-note" hidden></p>
-    <div class="grid" id="o-grid" aria-label="Lịch sử từng cú nhảy"></div>
+    <div class="grid" id="o-grid" data-i18n-aria="gridAria" aria-label="Jump history"></div>
     <dl class="stats">
-      <div><dt>Hành tinh</dt><dd id="o-planets">0</dd></div>
-      <div><dt>Chuỗi đẹp nhất</dt><dd id="o-streak">0</dd></div>
-      <div><dt>Kỷ lục</dt><dd id="o-best">0</dd></div>
+      <div><dt data-i18n="statPlanets">Planets</dt><dd id="o-planets">0</dd></div>
+      <div><dt data-i18n="statStreak">Best streak</dt><dd id="o-streak">0</dd></div>
+      <div><dt data-i18n="statBest">Best</dt><dd id="o-best">0</dd></div>
     </dl>
     <div class="rankbox" id="o-rankbox" hidden>
       <p id="o-rankmsg"></p>
       <form class="field" id="o-nameform" hidden>
-        <input id="name-input" type="text" maxlength="16" placeholder="Tên của bạn" autocomplete="nickname" autocapitalize="words" enterkeyhint="done" aria-label="Tên hiện trên bảng xếp hạng">
-        <button class="btn primary small" type="submit">Lên bảng</button>
+        <input id="name-input" type="text" maxlength="16" data-i18n-ph="namePh" placeholder="Your name" autocomplete="nickname" autocapitalize="words" enterkeyhint="done" data-i18n-aria="nameAria" aria-label="Name shown on the ranking">
+        <button class="btn primary small" type="submit" data-i18n="joinBoard">Submit</button>
       </form>
-      <button class="link" id="b-board2" type="button">Xem bảng xếp hạng</button>
+      <button class="link" id="b-board2" type="button" data-i18n="viewBoard">View ranking</button>
     </div>
     <div class="row">
-      <button id="b-retry" class="btn primary">Chơi lại<small id="o-left">Space</small></button>
-      <button id="b-share" class="btn hot">Khoe điểm<small>thách bạn bè</small></button>
+      <button id="b-retry" class="btn primary"><span id="o-retry">Play again</span><small id="o-left">Space</small></button>
+      <button id="b-share" class="btn hot"><span data-i18n="share">Share score</span><small data-i18n="shareSub">challenge friends</small></button>
     </div>
-    <textarea id="o-text" hidden readonly aria-label="Kết quả để chép"></textarea>
-    <button class="link" id="b-menu">Về màn hình chính</button>
+    <textarea id="o-text" hidden readonly data-i18n-aria="copyAria" aria-label="Result to copy"></textarea>
+    <button class="link" id="b-menu" data-i18n="backHome">Back to menu</button>
   </div>
 </div>
 
 <div id="board" class="overlay" hidden>
   <div class="card boardcard" role="dialog" aria-labelledby="bd-title">
     <div class="board-head">
-      <h2 id="bd-title">Bảng xếp hạng</h2>
-      <button class="icon-btn" id="b-board-close" type="button" aria-label="Đóng bảng xếp hạng"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      <h2 id="bd-title" data-i18n="boardTitle">Ranking</h2>
+      <button class="icon-btn" id="b-board-close" type="button" data-i18n-aria="closeBoard" aria-label="Close ranking"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
     </div>
     <div class="tabs" role="tablist">
-      <button role="tab" type="button" data-tab="today" aria-selected="true">Hôm nay</button>
-      <button role="tab" type="button" data-tab="yday" aria-selected="false">Hôm qua</button>
-      <button role="tab" type="button" data-tab="all" aria-selected="false">Kỷ lục</button>
+      <button role="tab" type="button" data-tab="today" aria-selected="true" data-i18n="tabToday">Today</button>
+      <button role="tab" type="button" data-tab="yday" aria-selected="false" data-i18n="tabYday">Yesterday</button>
+      <button role="tab" type="button" data-tab="all" aria-selected="false" data-i18n="tabAll">All-time</button>
     </div>
     <p class="board-sub" id="bd-sub"></p>
     <ol class="rows" id="bd-rows"></ol>
     <div class="row-me" id="bd-me" hidden></div>
     <p class="board-state" id="bd-state" hidden></p>
-    <div class="board-foot"><span id="bd-name"></span><button class="link" id="b-rename" type="button">Đổi tên</button></div>
+    <div class="board-foot"><span id="bd-name"></span><button class="link" id="b-rename" type="button">Change name</button></div>
     <form class="field" id="bd-nameform" hidden>
-      <input id="rename-input" type="text" maxlength="16" placeholder="Tên của bạn" autocomplete="nickname" autocapitalize="words" enterkeyhint="done" aria-label="Tên hiện trên bảng xếp hạng">
-      <button class="btn primary small" type="submit">Lưu</button>
+      <input id="rename-input" type="text" maxlength="16" data-i18n-ph="namePh" placeholder="Your name" autocomplete="nickname" autocapitalize="words" enterkeyhint="done" data-i18n-aria="nameAria" aria-label="Name shown on the ranking">
+      <button class="btn primary small" type="submit" data-i18n="save">Save</button>
     </form>
   </div>
 </div>
 
-<div id="banner">VƯỢT MẶT BẠN BÈ!</div>
+<div id="banner"></div>
 <div id="toast" role="status"></div>
 
 <script>
@@ -258,6 +267,130 @@ const store = {
   set(k, v) { mem[k] = v; try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
 };
 
+/* ---------- language ---------- */
+// Hai ngôn ngữ: tiếng Anh (mặc định) và tiếng Việt. Thêm chữ mới thì thêm vào CẢ HAI bảng dưới đây.
+const FD = "'Tektur', 'Exo 2', system-ui, sans-serif";   // font tiêu đề, dùng cho chữ vẽ trên canvas
+const FB = "'Exo 2', system-ui, sans-serif";             // font chữ thường trên canvas
+const I18N = {
+  en: {
+    canvasAria: 'Game area: tap to launch the comet', muteAria: 'Toggle sound',
+    tag: 'Tap at the right moment to sling your comet from planet to planet. One new map a day, the same map for everyone.',
+    accept: 'Accept challenge', daily: 'Daily challenge', dailyOut: 'No tries left today',
+    triesLeft: (l, n) => `${l}/${n} tries left`, newMapIn: s => `new map in ${s}`, hm: (h, m) => `${h}h ${m}m`,
+    free: 'Free play', freeSub: 'random map', board: 'Ranking', boardSub: "today's top", rankShort: (r, n) => `rank #${r}/${n}`,
+    how1t: 'Tap', how1: 'to leave orbit', how2t: 'Fly', how2: "into the next planet's pull", how3t: 'Hurry', how3: 'launch before the ring runs out',
+    todayBest: s => `Today: <b>${s}</b> pts`, freeBest: s => `Free play best: <b>${s}</b>`,
+    challengeMsg: (s, d) => `A friend just scored <b>${s}</b> on the ${d} map. Can you beat them?`,
+    dayLabel: (n, d) => `Day #${n} · ${d}`, sound: on => `Sound: ${on ? 'on' : 'off'}`,
+    hudDay: n => `Day #${n}`, hudChallenge: d => `Challenge ${d}`, hudFree: 'Free play',
+    hudTry: (a, n) => `Try ${a}/${n}`, hudNeed: n => ` · need ${n}`, hudTarget: n => `Target: ${n}`, hudNoCount: 'Not counted today', hudBest: n => `Best: ${n}`,
+    toastFreeNow: n => `All ${n} tries used today. This is free play.`,
+    combo: n => `STREAK ×${n}`,
+    popWorm: 'WORMHOLE!', popSkip: 'PLANET SKIP!', popFever: 'SUPERNOVA!', popPerfectN: n => `PERFECT ×${n}`, popPerfect: 'PERFECT!', popGood: 'NICE', popEdge: 'CLOSE CALL!',
+    beatFriend: 'YOU BEAT YOUR FRIEND!', zoneBanner: (n, name) => `ZONE ${n} · ${name}`,
+    zones: ['Calm Reach', 'Hot Belt', 'Galactic Swirl', 'Black Hole Rim', 'The Infinite'],
+    shortcut: 'SHORTCUT +3', tapToLaunch: 'TAP TO LAUNCH', tapHint: 'when the dotted line points at the next planet',
+    ranks: ['Lost meteor', 'Rookie astronaut', 'Orbit hunter', 'Timing wizard', 'Gravity master', 'Galactic legend'],
+    reasons: {
+      crash: ['Out of time! Watch the countdown ring around the planet.', 'You waited too long and the planet pulled you down.'],
+      hot: ['The red dwarf burned you up. The clock runs faster here.', "Too hot! Red dwarfs don't let anyone linger."],
+      lost: ['Drifted into the void...', 'Flew right out of the galaxy.', 'Space is big, but not that big.'],
+      near: ['So close! Missed by a hair.', 'Skimmed right past the pull zone!']
+    },
+    overDaily: (n, a, m) => `Day #${n} · Try ${a}/${m}`, overChallenge: d => `Challenge · ${d} map`, overFree: 'Free play', zoneN: n => ` · Zone ${n}`,
+    newRecord: 'NEW BEST', pts: 'pts',
+    vsWin: (target, diff) => `You beat your friend (${target} pts) by ${diff}!`, vsLose: (diff, target) => `${diff} more to beat your friend (${target} pts).`,
+    statPlanets: 'Planets', statStreak: 'Best streak', statBest: 'Best',
+    retry: 'Play again', retryFree: 'Free play', leftToday: l => `${l} ${l === 1 ? 'try' : 'tries'} left today`, notCounted: 'not counted today', retryNow: 'go again', retrySpace: 'or press Space',
+    noteOut: (n, best, s) => `All ${n} tries used today. Your daily score is locked at <b>${best}</b>. Keep going in free play: random maps, not counted for today. New map in ${s}.`,
+    noteFree: best => `This is free play. Your daily score is still <b>${best}</b>.`,
+    share: 'Share score', shareSub: 'challenge friends', backHome: 'Back to menu', gridAria: 'Jump history', copyAria: 'Result to copy',
+    shHeadFree: s => `🌠 QUỸ ĐẠO · Free play — ${s} pts`, shHead: (n, s) => `🌠 QUỸ ĐẠO #${n} — ${s} pts`,
+    shLine: (p, z, zn, st) => `🪐 ${p} planets · Zone ${z} (${zn}) · 🔥 streak ${st}`, shRank: (r, n) => `🏆 Rank ${r}/${n} today`,
+    shTitle: r => `Title: ${r}`, shTry: u => `Play it 👉 ${u}`, shBeat: u => `Beat my score 👉 ${u}`, shCode: c => `Challenge code: ${c}`,
+    copied: 'Copied! Paste it in a chat to challenge your friends', copyManual: 'Select and copy the text below',
+    lbNeedName: "Enter a name to put your score on today's ranking.", lbSending: 'Sending your score…', lbSent: 'Score sent.',
+    lbRank: (r, n) => `Rank <b>#${r}</b> of ${n} ${n === 1 ? 'player' : 'players'} today`, lbYourBest: s => ` (your best: ${s})`,
+    lbSendFail: "Couldn't send your score. Check your connection. ", lbRejected: "The server didn't accept this score. ", retryLink: 'Try again',
+    namePh: 'Your name', nameAria: 'Name shown on the ranking', joinBoard: 'Submit', viewBoard: 'View ranking',
+    boardTitle: 'Ranking', closeBoard: 'Close ranking', tabToday: 'Today', tabYday: 'Yesterday', tabAll: 'All-time',
+    bdToday: (n, d) => `Map of day #${n} · ${d}`, bdYday: d => `Final results for ${d}`, bdAll: "Each player's best score ever",
+    bdPlayers: n => ` · ${n} ${n === 1 ? 'player' : 'players'}`, loading: 'Loading…',
+    bdEmptyToday: 'Nobody is on the board yet today. Play the Daily challenge to be first.', bdEmpty: 'No scores here yet.', bdFail: "Couldn't load the ranking. ",
+    yourName: n => `Your name: ${n}`, noName: "You haven't set a name", rename: 'Change name', setName: 'Set name', save: 'Save', you: ' (you)',
+    rowPlanets: n => `${n} ${n === 1 ? 'planet' : 'planets'}`, rowDay: d => ` · ${d}`,
+    nameShort: 'Name needs at least 2 characters', nameSaved: 'Name saved', nameSavedNoSync: "Name saved, but the ranking hasn't updated yet"
+  },
+  vi: {
+    canvasAria: 'Màn chơi: chạm để phóng sao chổi', muteAria: 'Tắt/bật âm thanh',
+    tag: 'Chạm đúng lúc để phóng sao chổi qua từng hành tinh. Mỗi ngày một bản đồ mới, ai cũng chơi chung một bản đồ.',
+    accept: 'Nhận thách đấu', daily: 'Thử thách hôm nay', dailyOut: 'Hết lượt hôm nay',
+    triesLeft: (l, n) => `còn ${l}/${n} lượt`, newMapIn: s => `bản đồ mới sau ${s}`, hm: (h, m) => `${h} giờ ${m} phút`,
+    free: 'Chơi tự do', freeSub: 'bản đồ ngẫu nhiên', board: 'Xếp hạng', boardSub: 'top hôm nay', rankShort: (r, n) => `hạng #${r}/${n}`,
+    how1t: 'Chạm', how1: 'để rời quỹ đạo', how2t: 'Bay', how2: 'vào vùng hút hành tinh kế', how3t: 'Canh giờ', how3: 'phóng trước khi vòng đếm hết',
+    todayBest: s => `Hôm nay: <b>${s}</b> điểm`, freeBest: s => `Kỷ lục tự do: <b>${s}</b>`,
+    challengeMsg: (s, d) => `Một người bạn vừa đạt <b>${s}</b> điểm trên bản đồ ngày ${d}. Bạn có vượt mặt được không?`,
+    dayLabel: (n, d) => `Ngày #${n} · ${d}`, sound: on => `Âm thanh: ${on ? 'bật' : 'tắt'}`,
+    hudDay: n => `Ngày #${n}`, hudChallenge: d => `Thách đấu ${d}`, hudFree: 'Tự do',
+    hudTry: (a, n) => `Lượt ${a}/${n}`, hudNeed: n => ` · cần ${n}`, hudTarget: n => `Mục tiêu: ${n}`, hudNoCount: 'Không tính điểm ngày', hudBest: n => `Kỷ lục: ${n}`,
+    toastFreeNow: n => `Đã hết ${n} lượt hôm nay. Đây là chế độ tự do.`,
+    combo: n => `CHUỖI ×${n}`,
+    popWorm: 'LỖ SÂU!', popSkip: 'NHẢY CÓC!', popFever: 'SIÊU TÂN TINH!', popPerfectN: n => `HOÀN HẢO ×${n}`, popPerfect: 'HOÀN HẢO!', popGood: 'ỔN ÁP', popEdge: 'SÁT NÚT!',
+    beatFriend: 'VƯỢT MẶT BẠN BÈ!', zoneBanner: (n, name) => `VÙNG ${n} · ${name}`,
+    zones: ['Vùng yên bình', 'Vành đai nóng', 'Xoáy ngân hà', 'Rìa hố đen', 'Cõi vô cực'],
+    shortcut: 'LỐI TẮT +3', tapToLaunch: 'CHẠM ĐỂ PHÓNG', tapHint: 'khi đường chấm chỉ vào hành tinh kế tiếp',
+    ranks: ['Thiên thạch lạc lối', 'Phi hành gia tập sự', 'Thợ săn quỹ đạo', 'Thánh canh giờ', 'Bậc thầy trọng lực', 'Huyền thoại Ngân Hà'],
+    reasons: {
+      crash: ['Hết giờ! Để ý vòng đếm ngược quanh hành tinh nhé.', 'Chần chừ quá lâu, hành tinh đã kéo bạn xuống.'],
+      hot: ['Sao lùn đỏ thiêu rụi bạn. Ở đây đồng hồ chạy nhanh hơn.', 'Quá nóng! Sao lùn đỏ không cho ai nán lại lâu.'],
+      lost: ['Trôi vào hư vô...', 'Bay lạc khỏi dải Ngân Hà.', 'Vũ trụ rộng lắm, nhưng không rộng thế đâu.'],
+      near: ['Suýt nữa thôi! Hụt đúng một sợi tóc.', 'Sượt qua vùng hút trong gang tấc!']
+    },
+    overDaily: (n, a, m) => `Ngày #${n} · Lượt ${a}/${m}`, overChallenge: d => `Thách đấu · bản đồ ${d}`, overFree: 'Chế độ tự do', zoneN: n => ` · Vùng ${n}`,
+    newRecord: 'KỶ LỤC MỚI', pts: 'điểm',
+    vsWin: (target, diff) => `Bạn đã vượt mặt bạn bè (${target} điểm) thêm ${diff} điểm!`, vsLose: (diff, target) => `Còn thiếu ${diff} điểm để vượt mặt bạn bè (${target}).`,
+    statPlanets: 'Hành tinh', statStreak: 'Chuỗi đẹp nhất', statBest: 'Kỷ lục',
+    retry: 'Chơi lại', retryFree: 'Chơi tự do', leftToday: l => `còn ${l} lượt hôm nay`, notCounted: 'không tính điểm ngày', retryNow: 'thử lại ngay', retrySpace: 'hoặc bấm Space',
+    noteOut: (n, best, s) => `Bạn đã dùng hết ${n} lượt hôm nay. Điểm ngày chốt ở <b>${best}</b>. Chơi tiếp sẽ sang chế độ tự do: bản đồ ngẫu nhiên, không tính vào điểm ngày. Bản đồ mới sau ${s}.`,
+    noteFree: best => `Đây là chế độ tự do. Điểm ngày hôm nay của bạn vẫn là <b>${best}</b>.`,
+    share: 'Khoe điểm', shareSub: 'thách bạn bè', backHome: 'Về màn hình chính', gridAria: 'Lịch sử từng cú nhảy', copyAria: 'Kết quả để chép',
+    shHeadFree: s => `🌠 QUỸ ĐẠO · Tự do — ${s} điểm`, shHead: (n, s) => `🌠 QUỸ ĐẠO #${n} — ${s} điểm`,
+    shLine: (p, z, zn, st) => `🪐 ${p} hành tinh · Vùng ${z} (${zn}) · 🔥 chuỗi ${st}`, shRank: (r, n) => `🏆 Hạng ${r}/${n} hôm nay`,
+    shTitle: r => `Danh hiệu: ${r}`, shTry: u => `Chơi thử 👉 ${u}`, shBeat: u => `Vượt mặt mình đi 👉 ${u}`, shCode: c => `Mã thách đấu: ${c}`,
+    copied: 'Đã chép! Dán vào Messenger, Zalo hay TikTok để thách bạn bè', copyManual: 'Bôi đen và chép đoạn bên dưới nhé',
+    lbNeedName: 'Nhập tên để ghi điểm lên bảng xếp hạng hôm nay.', lbSending: 'Đang gửi điểm lên bảng xếp hạng…', lbSent: 'Đã gửi điểm.',
+    lbRank: (r, n) => `Hạng <b>#${r}</b> trong ${n} người chơi hôm nay`, lbYourBest: s => ` (điểm tốt nhất của bạn: ${s})`,
+    lbSendFail: 'Không gửi được điểm, kiểm tra mạng nhé. ', lbRejected: 'Máy chủ không nhận điểm này. ', retryLink: 'Thử lại',
+    namePh: 'Tên của bạn', nameAria: 'Tên hiện trên bảng xếp hạng', joinBoard: 'Lên bảng', viewBoard: 'Xem bảng xếp hạng',
+    boardTitle: 'Bảng xếp hạng', closeBoard: 'Đóng bảng xếp hạng', tabToday: 'Hôm nay', tabYday: 'Hôm qua', tabAll: 'Kỷ lục',
+    bdToday: (n, d) => `Bản đồ ngày #${n} · ${d}`, bdYday: d => `Kết quả chung cuộc ngày ${d}`, bdAll: 'Điểm cao nhất của mỗi người từ trước tới nay',
+    bdPlayers: n => ` · ${n} người chơi`, loading: 'Đang tải…',
+    bdEmptyToday: 'Chưa ai lên bảng hôm nay. Chơi Thử thách hôm nay để là người đầu tiên.', bdEmpty: 'Chưa có điểm nào ở đây.', bdFail: 'Không tải được bảng xếp hạng. ',
+    yourName: n => `Tên của bạn: ${n}`, noName: 'Bạn chưa đặt tên', rename: 'Đổi tên', setName: 'Đặt tên', save: 'Lưu', you: ' (bạn)',
+    rowPlanets: n => `${n} hành tinh`, rowDay: d => ` · ngày ${d}`,
+    nameShort: 'Tên cần ít nhất 2 ký tự', nameSaved: 'Đã lưu tên', nameSavedNoSync: 'Đã lưu tên, nhưng chưa cập nhật được lên bảng'
+  }
+};
+let lang = store.get('qd-lang', 'en');
+if (!I18N[lang]) lang = 'en';
+function t(key, ...args) {
+  let s = I18N[lang][key];
+  if (s == null) s = I18N.en[key];
+  return typeof s === 'function' ? s(...args) : s;
+}
+// Điền chữ cho các phần tử tĩnh có data-i18n (chữ), data-i18n-ph (placeholder), data-i18n-aria (aria-label)
+function applyLang() {
+  document.documentElement.lang = lang;
+  for (const el of document.querySelectorAll('[data-i18n]')) el.textContent = t(el.dataset.i18n);
+  for (const el of document.querySelectorAll('[data-i18n-ph]')) el.placeholder = t(el.dataset.i18nPh);
+  for (const el of document.querySelectorAll('[data-i18n-aria]')) el.setAttribute('aria-label', t(el.dataset.i18nAria));
+  $('l-en').setAttribute('aria-pressed', lang === 'en' ? 'true' : 'false');
+  $('l-vi').setAttribute('aria-pressed', lang === 'vi' ? 'true' : 'false');
+  renderMute(); refreshMenu();
+  if (boardOpen) { boardFoot(); loadBoard(); }
+}
+function setLang(l) { if (!I18N[l] || l === lang) return; lang = l; store.set('qd-lang', l); applyLang(); }
+
 /* ---------- dates & seeds ---------- */
 // "Ngày" của game tính theo giờ Việt Nam (UTC+7) trên MỌI máy, để ai cũng chơi chung một bản đồ
 // và chung một bảng xếp hạng, bất kể máy đang để múi giờ nào.
@@ -265,7 +398,8 @@ const VN_OFFSET = 7 * 3600e3, DAY_MS = 864e5;
 const ymdVN = ms => { const d = new Date(ms + VN_OFFSET); return d.getUTCFullYear() * 10000 + (d.getUTCMonth() + 1) * 100 + d.getUTCDate(); };
 const TODAY = ymdVN(Date.now());
 const dayNo = n => Math.round((Date.UTC(Math.floor(n / 10000), Math.floor(n / 100) % 100 - 1, n % 100) - Date.UTC(2026, 0, 1)) / 864e5) + 1;
-const fmtDate = n => (n % 100) + '/' + (Math.floor(n / 100) % 100);
+const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const fmtDate = n => lang === 'vi' ? (n % 100) + '/' + (Math.floor(n / 100) % 100) : (n % 100) + ' ' + MON[Math.floor(n / 100) % 100 - 1];
 const seedOf = n => (Math.imul(n, 2654435761) ^ 0x5bd1e995) >>> 0;
 const randSeed = () => (Math.random() * 4294967296) >>> 0;
 function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
@@ -324,10 +458,10 @@ function makePlanet(R, x, y, r, cap, w, life, amp, f, ph) {
   return { bx: x, x, y, r, cap, w, life, amp, f, ph, kind: 'normal', pal: PALS[Math.floor(R() * PALS.length)], ring: R() < 0.28, tilt: R() * 0.6 - 0.3, craters };
 }
 const HOT = ['#fff0c2', '#ff7a3d', '#8f1d1d'];
-const ZONES = ['Vùng yên bình', 'Vành đai nóng', 'Xoáy ngân hà', 'Rìa hố đen', 'Cõi vô cực'];
+const ZONE_COUNT = 5;   // tên các vùng nằm trong bảng dịch (zones)
 const ZTINT = ['', 'rgba(255,96,40,0.13)', 'rgba(40,200,255,0.12)', 'rgba(160,50,255,0.17)', 'rgba(255,40,120,0.17)'];
 const zoneOf = i => Math.floor(i / 10);
-const zoneName = i => ZONES[Math.min(ZONES.length - 1, zoneOf(i))];
+const zoneName = i => t('zones')[Math.min(ZONE_COUNT - 1, zoneOf(i))];
 function genPlanet(g, i) {
   const R = g.rng;
   if (i === 0) return makePlanet(R, 200, 0, 36, 92, 2.3, 12, 0, 0, 0);
@@ -415,7 +549,7 @@ function capture(g, j, worm) {
     g.score += pts;
     g.grid.push(worm ? '🌀' : gained > 1 ? '🚀' : q === 2 ? '🟩' : q === 1 ? '🟨' : '🟧');
     const fever = !worm && q === 2 && g.streak === 5;
-    const label = worm ? 'LỖ SÂU!' : gained > 1 ? 'NHẢY CÓC!' : fever ? 'SIÊU TÂN TINH!' : q === 2 ? (g.streak >= 3 ? 'HOÀN HẢO ×' + g.streak : 'HOÀN HẢO!') : q === 1 ? 'ỔN ÁP' : 'SÁT NÚT!';
+    const label = worm ? t('popWorm') : gained > 1 ? t('popSkip') : fever ? t('popFever') : q === 2 ? (g.streak >= 3 ? t('popPerfectN', g.streak) : t('popPerfect')) : q === 1 ? t('popGood') : t('popEdge');
     const col = worm ? '#c9b5ff' : gained > 1 ? '#7ef0ff' : q === 2 ? '#ffd66b' : q === 1 ? '#f6f1ff' : '#ff9f6b';
     pop(g, c.x, c.y - 26, label, col, fever ? 26 : q === 2 || worm ? 22 : 18);
     pop(g, c.x, c.y - 4, '+' + pts, col, 16, 0.12);
@@ -423,8 +557,8 @@ function capture(g, j, worm) {
       if (worm) sfx.worm(); else if (gained > 1) sfx.skip(); else sfx.catchQ(q, g.streak);
       buzz(q === 2 || worm ? [10, 30, 14] : 8);
       hudScore(g);
-      if (g.target && !g.beat && g.score > g.target) { g.beat = true; banner('VƯỢT MẶT BẠN BÈ!'); sfx.win(); }
-      else if (zoneOf(j) > zBefore) { banner(`VÙNG ${zoneOf(j) + 1} · ${zoneName(j).toUpperCase()}`); sfx.win(); }
+      if (g.target && !g.beat && g.score > g.target) { g.beat = true; banner(t('beatFriend')); sfx.win(); }
+      else if (zoneOf(j) > zBefore) { banner(t('zoneBanner', zoneOf(j) + 1, zoneName(j).toUpperCase())); sfx.win(); }
     }
   } else { g.streak = 0; if (!g.auto) { sfx.catchQ(0, 0); hudScore(g); } }
 
@@ -612,8 +746,8 @@ function draw(g) {
     }
     ctx.restore(); ctx.lineCap = 'butt';
     if (live) {
-      ctx.fillStyle = '#c9b5ff'; ctx.textAlign = 'center'; ctx.font = "800 13px 'Baloo 2', system-ui, sans-serif";
-      ctx.fillText('LỐI TẮT +3', wm.x, wm.y + wm.r + 18);
+      ctx.fillStyle = '#c9b5ff'; ctx.textAlign = 'center'; ctx.font = '800 13px ' + FD;
+      ctx.fillText(t('shortcut'), wm.x, wm.y + wm.r + 18);
     }
     ctx.globalAlpha = 1;
   }
@@ -629,10 +763,10 @@ function draw(g) {
   if (!g.auto && c.state === 'ready') {
     const P = g.planets[0];
     ctx.globalAlpha = 0.6 + 0.4 * Math.sin(now * 5);
-    ctx.fillStyle = '#ffd66b'; ctx.textAlign = 'center'; ctx.font = "800 22px 'Baloo 2', system-ui, sans-serif";
-    ctx.fillText('CHẠM ĐỂ PHÓNG', P.x, P.y + P.cap + 34);
-    ctx.font = "600 13px 'Be Vietnam Pro', system-ui, sans-serif"; ctx.fillStyle = '#f6f1ff';
-    ctx.fillText('khi đường chấm chỉ vào hành tinh kế tiếp', P.x, P.y + P.cap + 56);
+    ctx.fillStyle = '#ffd66b'; ctx.textAlign = 'center'; ctx.font = '800 22px ' + FD;
+    ctx.fillText(t('tapToLaunch'), P.x, P.y + P.cap + 34);
+    ctx.font = '600 13px ' + FB; ctx.fillStyle = '#f6f1ff';
+    ctx.fillText(t('tapHint'), P.x, P.y + P.cap + 56);
     ctx.globalAlpha = 1;
   }
 
@@ -673,7 +807,7 @@ function draw(g) {
     if (t < 0) continue;
     const s = t < 0.15 ? lerp(0.6, 1.15, t / 0.15) : lerp(1.15, 1, Math.min(1, (t - 0.15) / 0.2));
     ctx.globalAlpha = t > 0.65 ? 1 - (t - 0.65) / 0.35 : 1;
-    ctx.font = `800 ${Math.round(p.size * s)}px 'Baloo 2', system-ui, sans-serif`;
+    ctx.font = `800 ${Math.round(p.size * s)}px ${FD}`;
     ctx.fillStyle = 'rgba(8,9,31,0.6)'; ctx.fillText(p.text, p.x + 1.5, p.y - t * 30 + 2);
     ctx.fillStyle = p.col; ctx.fillText(p.text, p.x, p.y - t * 30);
   }
@@ -727,14 +861,8 @@ function readHash() {
 readHash();
 window.addEventListener('hashchange', () => { readHash(); if (state === 'menu') refreshMenu(); });
 
-const RANKS = [[0, 'Thiên thạch lạc lối'], [10, 'Phi hành gia tập sự'], [25, 'Thợ săn quỹ đạo'], [50, 'Thánh canh giờ'], [90, 'Bậc thầy trọng lực'], [150, 'Huyền thoại Ngân Hà']];
-const rankOf = s => RANKS.reduce((a, r) => (s >= r[0] ? r[1] : a), RANKS[0][1]);
-const REASONS = {
-  crash: ['Hết giờ! Để ý vòng đếm ngược quanh hành tinh nhé.', 'Chần chừ quá lâu, hành tinh đã kéo bạn xuống.'],
-  hot: ['Sao lùn đỏ thiêu rụi bạn. Ở đây đồng hồ chạy nhanh hơn.', 'Quá nóng! Sao lùn đỏ không cho ai nán lại lâu.'],
-  lost: ['Trôi vào hư vô...', 'Bay lạc khỏi dải Ngân Hà.', 'Vũ trụ rộng lắm, nhưng không rộng thế đâu.'],
-  near: ['Suýt nữa thôi! Hụt đúng một sợi tóc.', 'Sượt qua vùng hút trong gang tấc!']
-};
+const RANK_AT = [0, 10, 25, 50, 90, 150];   // mốc điểm của từng danh hiệu; tên danh hiệu nằm trong bảng dịch (ranks)
+const rankOf = s => { let i = 0; RANK_AT.forEach((v, k) => { if (s >= v) i = k; }); return t('ranks')[i]; };
 const pick = a => a[Math.floor(Math.random() * a.length)];
 
 function getDaily() { const d = store.get('qd-daily', null); return d && d.date === TODAY ? d : { date: TODAY, used: 0, best: 0, runs: [] }; }
@@ -742,26 +870,26 @@ function saveDaily(d) { store.set('qd-daily', d); }
 
 function refreshMenu() {
   const d = getDaily(), left = DAILY_TRIES - d.used;
-  $('m-day').textContent = `Ngày #${dayNo(TODAY)} · ${fmtDate(TODAY)}`;
+  $('m-day').textContent = t('dayLabel', dayNo(TODAY), fmtDate(TODAY));
   const bd = $('b-daily');
-  if (left > 0) { bd.disabled = false; bd.firstChild.textContent = 'Thử thách hôm nay'; $('m-left').textContent = `còn ${left}/${DAILY_TRIES} lượt`; }
-  else { bd.disabled = true; bd.firstChild.textContent = 'Hết lượt hôm nay'; $('m-left').textContent = 'bản đồ mới sau ' + untilMidnight(); }
+  if (left > 0) { bd.disabled = false; $('m-daily').textContent = t('daily'); $('m-left').textContent = t('triesLeft', left, DAILY_TRIES); }
+  else { bd.disabled = true; $('m-daily').textContent = t('dailyOut'); $('m-left').textContent = t('newMapIn', untilMidnight()); }
   const fb = store.get('qd-best', 0);
   const parts = [];
-  if (d.used) parts.push(`Hôm nay: <b>${d.best}</b> điểm`);
-  if (fb) parts.push(`Kỷ lục tự do: <b>${fb}</b>`);
+  if (d.used) parts.push(t('todayBest', d.best));
+  if (fb) parts.push(t('freeBest', fb));
   $('m-best').innerHTML = parts.join(' · ');
   $('m-best').hidden = !parts.length;
   if (challenge) {
     $('m-challenge').hidden = false; $('b-challenge').hidden = false;
-    $('m-challenge').innerHTML = `Một người bạn vừa đạt <b>${challenge.score}</b> điểm trên bản đồ ngày ${fmtDate(challenge.date)}. Bạn có vượt mặt được không?`;
+    $('m-challenge').innerHTML = t('challengeMsg', challenge.score, fmtDate(challenge.date));
   } else { $('m-challenge').hidden = true; $('b-challenge').hidden = true; }
   if (LB_ON) menuRank();
 }
 function untilMidnight() {
   // tới nửa đêm giờ Việt Nam, lúc bản đồ đổi cho mọi người
   const mins = Math.max(1, Math.round((DAY_MS - (Date.now() + VN_OFFSET) % DAY_MS) / 60000));
-  return `${Math.floor(mins / 60)} giờ ${mins % 60} phút`;
+  return t('hm', Math.floor(mins / 60), mins % 60);
 }
 
 function startRun(md) {
@@ -778,9 +906,11 @@ function startRun(md) {
   game = newRun(seed, { target, date });
   state = 'play';
   $('menu').hidden = true; $('over').hidden = true; $('hud').hidden = false; $('o-text').hidden = true;
-  $('h-mode').innerHTML = md === 'daily' ? `<b>Ngày #${dayNo(TODAY)}</b>` : md === 'challenge' ? `<b>Thách đấu ${fmtDate(date)}</b>` : '<b>Tự do</b>';
-  $('h-sub').textContent = md === 'daily' ? `Lượt ${attemptNo}/${DAILY_TRIES}` + (target ? ` · cần ${target + 1}` : '') : target ? `Mục tiêu: ${target + 1}` : getDaily().used >= DAILY_TRIES ? 'Không tính điểm ngày' : 'Kỷ lục: ' + store.get('qd-best', 0);
-  if (md === 'free' && getDaily().used >= DAILY_TRIES) toast('Đã hết 3 lượt hôm nay. Đây là chế độ tự do.');
+  const hb = document.createElement('b');
+  hb.textContent = md === 'daily' ? t('hudDay', dayNo(TODAY)) : md === 'challenge' ? t('hudChallenge', fmtDate(date)) : t('hudFree');
+  $('h-mode').replaceChildren(hb);
+  $('h-sub').textContent = md === 'daily' ? t('hudTry', attemptNo, DAILY_TRIES) + (target ? t('hudNeed', target + 1) : '') : target ? t('hudTarget', target + 1) : getDaily().used >= DAILY_TRIES ? t('hudNoCount') : t('hudBest', store.get('qd-best', 0));
+  if (md === 'free' && getDaily().used >= DAILY_TRIES) toast(t('toastFreeNow', DAILY_TRIES));
   hudScore(game);
 }
 function acceptChallenge() {
@@ -792,7 +922,7 @@ function hudScore(g) {
   if (g.score !== lastScore) { $('score').textContent = g.score; lastScore = g.score; }
   if (g.streak !== lastStreak) {
     const el = $('combo');
-    el.textContent = g.streak >= 2 ? `CHUỖI ×${g.streak}` : '';
+    el.textContent = g.streak >= 2 ? t('combo', g.streak) : '';
     el.classList.remove('bump'); void el.offsetWidth; if (g.streak >= 2) el.classList.add('bump');
     lastStreak = g.streak;
   }
@@ -815,16 +945,16 @@ function onGameOver(g) {
     if (g.score > cb) store.set(k, g.score);
     best = Math.max(cb, g.score);
   }
-  $('o-ctx').textContent = (mode === 'daily' ? `Ngày #${dayNo(TODAY)} · Lượt ${attemptNo}/${DAILY_TRIES}` : mode === 'challenge' ? `Thách đấu · bản đồ ${fmtDate(g.date)}` : 'Chế độ tự do') + ` · Vùng ${zoneOf(g.maxIdx) + 1}`;
+  $('o-ctx').textContent = (mode === 'daily' ? t('overDaily', dayNo(TODAY), attemptNo, DAILY_TRIES) : mode === 'challenge' ? t('overChallenge', fmtDate(g.date)) : t('overFree')) + t('zoneN', zoneOf(g.maxIdx) + 1);
   $('o-new').hidden = !isNew;
   $('o-score').textContent = g.score;
   $('o-rank').textContent = rankOf(g.score);
-  $('o-reason').textContent = pick(REASONS[g.death] || REASONS.lost);
+  $('o-reason').textContent = pick(t('reasons')[g.death] || t('reasons').lost);
   const vs = $('o-vs');
   if (g.target) {
     vs.hidden = false;
-    if (g.score > g.target) { vs.className = 'vs win'; vs.textContent = `Bạn đã vượt mặt bạn bè (${g.target} điểm) thêm ${g.score - g.target} điểm!`; }
-    else { vs.className = 'vs lose'; vs.textContent = `Còn thiếu ${g.target - g.score + 1} điểm để vượt mặt bạn bè (${g.target}).`; }
+    if (g.score > g.target) { vs.className = 'vs win'; vs.textContent = t('vsWin', g.target, g.score - g.target); }
+    else { vs.className = 'vs lose'; vs.textContent = t('vsLose', g.target - g.score + 1, g.target); }
   } else vs.hidden = true;
   const cells = gridCells(g.grid);
   $('o-grid').innerHTML = cells.map(e => `<span>${e}</span>`).join('');
@@ -835,15 +965,15 @@ function onGameOver(g) {
   note.hidden = true;
   if (mode === 'daily') {
     const left = DAILY_TRIES - dd.used;
-    retry.firstChild.textContent = left > 0 ? 'Chơi lại' : 'Chơi tự do';
-    $('o-left').textContent = left > 0 ? `còn ${left} lượt hôm nay` : 'không tính điểm ngày';
+    $('o-retry').textContent = left > 0 ? t('retry') : t('retryFree');
+    $('o-left').textContent = left > 0 ? t('leftToday', left) : t('notCounted');
     if (left <= 0) {
       note.hidden = false;
-      note.innerHTML = `Bạn đã dùng hết ${DAILY_TRIES} lượt hôm nay. Điểm ngày chốt ở <b>${dd.best}</b>. Chơi tiếp sẽ sang chế độ tự do: bản đồ ngẫu nhiên, không tính vào điểm ngày. Bản đồ mới sau ${untilMidnight()}.`;
+      note.innerHTML = t('noteOut', DAILY_TRIES, dd.best, untilMidnight());
     }
   } else {
-    retry.firstChild.textContent = 'Chơi lại'; $('o-left').textContent = matchMedia('(pointer: coarse)').matches ? 'thử lại ngay' : 'hoặc bấm Space';
-    if (mode === 'free' && dd.used >= DAILY_TRIES) { note.hidden = false; note.innerHTML = `Đây là chế độ tự do. Điểm ngày hôm nay của bạn vẫn là <b>${dd.best}</b>.`; }
+    $('o-retry').textContent = t('retry'); $('o-left').textContent = matchMedia('(pointer: coarse)').matches ? t('retryNow') : t('retrySpace');
+    if (mode === 'free' && dd.used >= DAILY_TRIES) { note.hidden = false; note.innerHTML = t('noteFree', dd.best); }
   }
   $('hud').hidden = true;
   $('over').hidden = false;
@@ -853,21 +983,21 @@ function onGameOver(g) {
 function gridCells(grid) { return grid.length <= 40 ? grid.slice() : grid.slice(0, 38).concat('…', grid[grid.length - 1]); }
 
 function shareText(g) {
-  const head = mode === 'free' ? `🌠 QUỸ ĐẠO · Tự do — ${g.score} điểm` : `🌠 QUỸ ĐẠO #${dayNo(g.date)} — ${g.score} điểm`;
+  const head = mode === 'free' ? t('shHeadFree', g.score) : t('shHead', dayNo(g.date), g.score);
   const cells = gridCells(g.grid), rows = [];
   for (let i = 0; i < cells.length; i += 10) rows.push(cells.slice(i, i + 10).join(''));
-  const lines = [head, `🪐 ${g.maxIdx} hành tinh · Vùng ${zoneOf(g.maxIdx) + 1} (${zoneName(g.maxIdx)}) · 🔥 chuỗi ${g.bestStreak}`, ...rows, `Danh hiệu: ${rankOf(g.score)}`];
-  if (g.rank) lines.splice(2, 0, `🏆 Hạng ${g.rank}/${g.rankTotal} hôm nay`);
-  if (mode === 'free') { if (SHARE_URL) lines.push(`Chơi thử 👉 ${SHARE_URL}`); }
-  else if (SHARE_URL) lines.push(`Vượt mặt mình đi 👉 ${SHARE_URL}#vs-${g.score}-${g.date}`);
-  else lines.push(`Mã thách đấu: vs-${g.score}-${g.date}`);
+  const lines = [head, t('shLine', g.maxIdx, zoneOf(g.maxIdx) + 1, zoneName(g.maxIdx), g.bestStreak), ...rows, t('shTitle', rankOf(g.score))];
+  if (g.rank) lines.splice(2, 0, t('shRank', g.rank, g.rankTotal));
+  if (mode === 'free') { if (SHARE_URL) lines.push(t('shTry', SHARE_URL)); }
+  else if (SHARE_URL) lines.push(t('shBeat', `${SHARE_URL}#vs-${g.score}-${g.date}`));
+  else lines.push(t('shCode', `vs-${g.score}-${g.date}`));
   return lines.join('\n');
 }
 function share() {
   const text = shareText(game);
-  const fallback = () => { const ta = $('o-text'); ta.hidden = false; ta.value = text; ta.focus(); ta.select(); toast('Bôi đen và chép đoạn bên dưới nhé'); };
+  const fallback = () => { const ta = $('o-text'); ta.hidden = false; ta.value = text; ta.focus(); ta.select(); toast(t('copyManual')); };
   const copy = () => {
-    try { navigator.clipboard.writeText(text).then(() => toast('Đã chép! Dán vào Messenger, Zalo hay TikTok để thách bạn bè'), fallback); }
+    try { navigator.clipboard.writeText(text).then(() => toast(t('copied')), fallback); }
     catch (e) { fallback(); }
   };
   if (NATIVE) { try { NATIVE.postMessage({ type: 'share', text }); return; } catch (e) {} }
@@ -884,7 +1014,7 @@ function banner(msg) { const b = $('banner'); b.textContent = msg; b.classList.a
 
 const ICON_ON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/><path d="M19 6a8.5 8.5 0 0 1 0 12"/></svg>';
 const ICON_OFF = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M17 9l5 6M22 9l-5 6"/></svg>';
-function renderMute() { $('b-mute2').innerHTML = muted ? ICON_OFF : ICON_ON; $('b-mute').textContent = 'Âm thanh: ' + (muted ? 'tắt' : 'bật'); }
+function renderMute() { $('b-mute2').innerHTML = muted ? ICON_OFF : ICON_ON; $('b-mute').textContent = t('sound', !muted); }
 function toggleMute() { muted = !muted; store.set('qd-mute', muted); renderMute(); if (!muted) audio(); }
 
 /* ---------- leaderboard ---------- */
@@ -930,22 +1060,23 @@ function showRankBox(g) {
   const box = $('o-rankbox'), form = $('o-nameform');
   if (!LB_ON || mode !== 'daily') { box.hidden = true; return; }
   box.hidden = false;
-  if (!getName()) { form.hidden = false; $('o-rankmsg').textContent = 'Nhập tên để ghi điểm lên bảng xếp hạng hôm nay.'; return; }
+  if (!getName()) { form.hidden = false; $('o-rankmsg').textContent = t('lbNeedName'); return; }
   form.hidden = true;
   sendRun(g);
 }
 function sendRun(g) {
   const msg = $('o-rankmsg');
-  msg.textContent = 'Đang gửi điểm lên bảng xếp hạng…';
+  msg.textContent = t('lbSending');
   submitBest(g).then(b => {
     if (game !== g) return;                     // người chơi đã sang ván khác
-    if (!b || !b.me) { msg.textContent = 'Đã gửi điểm.'; return; }
+    if (!b || !b.me) { msg.textContent = t('lbSent'); return; }
     g.rank = Number(b.me.rank); g.rankTotal = Number(b.total);
-    msg.innerHTML = `Hạng <b>#${g.rank}</b> trong ${g.rankTotal} người chơi hôm nay` + (Number(b.me.score) > g.score ? ` (điểm tốt nhất của bạn: ${Number(b.me.score)})` : '');
+    msg.innerHTML = t('lbRank', g.rank, g.rankTotal) + (Number(b.me.score) > g.score ? t('lbYourBest', Number(b.me.score)) : '');
   }).catch(err => {
     if (game !== g) return;
-    msg.textContent = (err && err.server ? err.message + '. ' : 'Không gửi được điểm, kiểm tra mạng nhé. ');
-    msg.append(linkBtn('Thử lại', () => sendRun(g)));
+    // lời báo lỗi của máy chủ viết bằng tiếng Việt, nên chỉ hiện nguyên văn khi đang ở tiếng Việt
+    msg.textContent = err && err.server ? (lang === 'vi' ? err.message + '. ' : t('lbRejected')) : t('lbSendFail');
+    msg.append(linkBtn(t('retryLink'), () => sendRun(g)));
   });
 }
 
@@ -956,7 +1087,7 @@ function openBoard(tab) {
   $('b-board-close').focus({ preventScroll: true });
 }
 function closeBoard() { boardOpen = false; $('board').hidden = true; }
-function boardFoot() { const n = getName(); $('bd-name').textContent = n ? `Tên của bạn: ${n}` : 'Bạn chưa đặt tên'; $('b-rename').textContent = n ? 'Đổi tên' : 'Đặt tên'; }
+function boardFoot() { const n = getName(); $('bd-name').textContent = n ? t('yourName', n) : t('noName'); $('b-rename').textContent = n ? t('rename') : t('setName'); }
 function setTab(tab) {
   boardTab = tab;
   for (const b of document.querySelectorAll('#board [role=tab]')) b.setAttribute('aria-selected', b.dataset.tab === tab ? 'true' : 'false');
@@ -966,37 +1097,37 @@ function rowEl(tag, r, isMe) {
   const el = document.createElement(tag);
   if (isMe) el.classList.add('me');
   const rk = document.createElement('span'); rk.className = 'rk' + (r.rank <= 3 ? ' r' + r.rank : ''); rk.textContent = r.rank;
-  const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = r.name + (isMe ? ' (bạn)' : '');   // textContent: tên do người chơi nhập
-  const sm = document.createElement('small'); sm.textContent = `${Number(r.planets)} hành tinh` + (r.day ? ` · ngày ${fmtDate(Number(r.day))}` : ''); nm.append(sm);
+  const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = r.name + (isMe ? t('you') : '');   // textContent: tên do người chơi nhập
+  const sm = document.createElement('small'); sm.textContent = t('rowPlanets', Number(r.planets)) + (r.day ? t('rowDay', fmtDate(Number(r.day))) : ''); nm.append(sm);
   const sc = document.createElement('span'); sc.className = 'sc'; sc.textContent = Number(r.score);
   el.append(rk, nm, sc);
   return el;
 }
 function loadBoard() {
   const req = ++boardReq, rows = $('bd-rows'), st = $('bd-state'), me = $('bd-me'), sub = $('bd-sub');
-  const head = boardTab === 'today' ? `Bản đồ ngày #${dayNo(TODAY)} · ${fmtDate(TODAY)}` : boardTab === 'yday' ? `Kết quả chung cuộc ngày ${fmtDate(ydayOf())}` : 'Điểm cao nhất của mỗi người từ trước tới nay';
-  rows.textContent = ''; me.hidden = true; st.hidden = false; st.textContent = 'Đang tải…'; sub.textContent = head;
+  const head = boardTab === 'today' ? t('bdToday', dayNo(TODAY), fmtDate(TODAY)) : boardTab === 'yday' ? t('bdYday', fmtDate(ydayOf())) : t('bdAll');
+  rows.textContent = ''; me.hidden = true; st.hidden = false; st.textContent = t('loading'); sub.textContent = head;
   const p = boardTab === 'all' ? rpc('hall_of_fame', { p_player: playerId(), p_limit: 20 })
     : rpc('leaderboard', { p_day: boardTab === 'today' ? TODAY : ydayOf(), p_player: playerId(), p_limit: 20 });
   p.then(b => {
     if (req !== boardReq) return;
     const top = (b && b.top) || [];
     if (boardTab === 'today' && b && b.me) { lastRank = { rank: Number(b.me.rank), total: Number(b.total) }; menuRank(); }
-    if (!top.length) { st.textContent = boardTab === 'today' ? 'Chưa ai lên bảng hôm nay. Chơi Thử thách hôm nay để là người đầu tiên.' : 'Chưa có điểm nào ở đây.'; return; }
+    if (!top.length) { st.textContent = boardTab === 'today' ? t('bdEmptyToday') : t('bdEmpty'); return; }
     st.hidden = true;
-    sub.textContent = `${head} · ${Number(b.total)} người chơi`;
+    sub.textContent = head + t('bdPlayers', Number(b.total));
     for (const r of top) rows.append(rowEl('li', r, !!r.me));
     if (b.me && !top.some(r => r.me)) { me.replaceChildren(...rowEl('div', b.me, true).childNodes); me.hidden = false; }
   }).catch(() => {
     if (req !== boardReq) return;
-    st.hidden = false; st.textContent = 'Không tải được bảng xếp hạng. ';
-    st.append(linkBtn('Thử lại', loadBoard));
+    st.hidden = false; st.textContent = t('bdFail');
+    st.append(linkBtn(t('retryLink'), loadBoard));
   });
 }
-function menuRank() { $('m-rank').textContent = lastRank ? `hạng #${lastRank.rank}/${lastRank.total}` : 'top hôm nay'; }
+function menuRank() { $('m-rank').textContent = lastRank ? t('rankShort', lastRank.rank, lastRank.total) : t('boardSub'); }
 function saveName(input) {
   const n = cleanName(input.value);
-  if (n.length < 2) { toast('Tên cần ít nhất 2 ký tự'); input.focus(); return false; }
+  if (n.length < 2) { toast(t('nameShort')); input.focus(); return false; }
   store.set('qd-name', n); input.blur();
   return true;
 }
@@ -1015,8 +1146,8 @@ if (LB_ON) {
     $('bd-nameform').hidden = true; boardFoot();
     const d = getDaily();
     // đã có điểm hôm nay thì gửi lại để tên mới hiện trên bảng
-    if (d.runs.length && d.bestPlanets != null) submitBest(null).then(() => { if (boardOpen) loadBoard(); if (state === 'over' && game && mode === 'daily') showRankBox(game); }).catch(() => toast('Đã lưu tên, nhưng chưa cập nhật được lên bảng'));
-    else toast('Đã lưu tên');
+    if (d.runs.length && d.bestPlanets != null) submitBest(null).then(() => { if (boardOpen) loadBoard(); if (state === 'over' && game && mode === 'daily') showRankBox(game); }).catch(() => toast(t('nameSavedNoSync')));
+    else toast(t('nameSaved'));
   });
 } else $('m-row').style.gridTemplateColumns = '1fr';
 
@@ -1041,12 +1172,13 @@ $('b-share').addEventListener('click', share);
 $('b-menu').addEventListener('click', goMenu);
 $('b-mute').addEventListener('click', toggleMute);
 $('b-mute2').addEventListener('click', toggleMute);
+$('l-en').addEventListener('click', () => setLang('en'));
+$('l-vi').addEventListener('click', () => setLang('vi'));
 window.addEventListener('resize', resize);
 
 /* ---------- boot ---------- */
 resize();
-renderMute();
-refreshMenu();
+applyLang();
 attract = newRun(randSeed(), { auto: true });
 let last = performance.now();
 function frame(now) {

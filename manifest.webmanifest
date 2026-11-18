@@ -1,8 +1,8 @@
 {
   "name": "Quỹ Đạo",
   "short_name": "Quỹ Đạo",
-  "description": "Chạm đúng lúc để phóng sao chổi qua từng hành tinh. Mỗi ngày một bản đồ mới.",
-  "lang": "vi",
+  "description": "Tap at the right moment to sling your comet from planet to planet. One new map a day.",
+  "lang": "en",
   "start_url": "./",
   "scope": "./",
   "display": "fullscreen",
