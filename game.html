@@ -213,7 +213,7 @@ body{background:var(--space-deep);color:var(--ink);font-family:var(--f-body);fon
         <input id="name-input" type="text" maxlength="16" data-i18n-ph="namePh" placeholder="Your name" autocomplete="nickname" autocapitalize="words" enterkeyhint="done" data-i18n-aria="nameAria" aria-label="Name shown on the ranking">
         <button class="btn primary small" type="submit" data-i18n="joinBoard">Submit</button>
       </form>
-      <p class="rules" id="o-rules" hidden><span data-i18n="nameRules">Names are public. Offensive names are removed.</span> <a href="https://vunguyenitcontact.github.io/quy-dao/privacy.html#rules" target="_blank" rel="noopener" data-i18n="rulesLink">Rules</a></p>
+      <p class="rules" id="o-rules" hidden><span data-i18n="nameRules">By submitting a name you agree to the rules: names are public, and offensive names are not tolerated and get removed.</span> <a href="https://vunguyenitcontact.github.io/quy-dao/privacy.html#rules" target="_blank" rel="noopener" data-i18n="rulesLink">Read the rules</a></p>
       <button class="link" id="b-board2" type="button" data-i18n="viewBoard">View ranking</button>
     </div>
     <div class="row">
@@ -253,7 +253,7 @@ body{background:var(--space-deep);color:var(--ink);font-family:var(--f-body);fon
       <input id="rename-input" type="text" maxlength="16" data-i18n-ph="namePh" placeholder="Your name" autocomplete="nickname" autocapitalize="words" enterkeyhint="done" data-i18n-aria="nameAria" aria-label="Name shown on the ranking">
       <button class="btn primary small" type="submit" data-i18n="save">Save</button>
     </form>
-    <p class="rules"><span data-i18n="nameRules">Names are public. Offensive names are removed.</span> <a href="https://vunguyenitcontact.github.io/quy-dao/privacy.html#rules" target="_blank" rel="noopener" data-i18n="rulesLink">Rules</a></p>
+    <p class="rules"><span data-i18n="nameRules">By submitting a name you agree to the rules: names are public, and offensive names are not tolerated and get removed.</span> <a href="https://vunguyenitcontact.github.io/quy-dao/privacy.html#rules" target="_blank" rel="noopener" data-i18n="rulesLink">Read the rules</a></p>
   </div>
 </div>
 
@@ -345,7 +345,7 @@ const I18N = {
     sheetReport: 'Report this name', sheetHide: 'Hide this player', cancel: 'Cancel',
     reported: 'Reported. Thank you. We review reports within 24 hours.', reportFail: "Couldn't send the report. Please try again.",
     hiddenOne: 'Player hidden on this device', hiddenCount: n => `${n} hidden on this device. `, showAll: 'Show all',
-    nameRules: 'Names are public. Offensive names are removed.', rulesLink: 'Rules', nameBad: 'That name is not allowed. Please choose another.',
+    nameRules: 'By submitting a name you agree to the rules: names are public, and offensive names are not tolerated and get removed.', rulesLink: 'Read the rules', nameBad: 'That name is not allowed. Please choose another.',
     nameShort: 'Name needs at least 2 characters', nameSaved: 'Name saved', nameSavedNoSync: "Name saved, but the ranking hasn't updated yet"
   },
   vi: {
@@ -400,7 +400,7 @@ const I18N = {
     sheetReport: 'Báo cáo tên này', sheetHide: 'Ẩn người chơi này', cancel: 'Huỷ',
     reported: 'Đã báo cáo. Cảm ơn bạn. Báo cáo được xem trong vòng 24 giờ.', reportFail: 'Chưa gửi được báo cáo. Thử lại nhé.',
     hiddenOne: 'Đã ẩn người chơi này trên máy bạn', hiddenCount: n => `Đang ẩn ${n} người trên máy này. `, showAll: 'Hiện lại',
-    nameRules: 'Tên hiện công khai. Tên phản cảm sẽ bị gỡ.', rulesLink: 'Quy định', nameBad: 'Tên này không được phép. Hãy chọn tên khác.',
+    nameRules: 'Gửi tên là bạn đồng ý với quy định: tên hiện công khai, tên phản cảm không được chấp nhận và sẽ bị gỡ.', rulesLink: 'Đọc quy định', nameBad: 'Tên này không được phép. Hãy chọn tên khác.',
     nameShort: 'Tên cần ít nhất 2 ký tự', nameSaved: 'Đã lưu tên', nameSavedNoSync: 'Đã lưu tên, nhưng chưa cập nhật được lên bảng'
   }
 };
