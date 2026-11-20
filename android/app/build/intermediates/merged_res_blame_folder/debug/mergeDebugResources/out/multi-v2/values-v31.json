@@ -1,0 +1,28 @@
+{
+    "logs": [
+        {
+            "outputFile": "app.quydao.game.app-mergeDebugResources-4:/values-v31/values-v31.xml",
+            "map": [
+                {
+                    "source": "/Volumes/Kingston SNV2S200G/Videcode/quy-dao/android/app/src/main/res/values-v31/themes.xml",
+                    "from": {
+                        "startLines": "3",
+                        "startColumns": "4",
+                        "startOffsets": "129",
+                        "endLines": "11",
+                        "endColumns": "12",
+                        "endOffsets": "713"
+                    },
+                    "to": {
+                        "startLines": "2",
+                        "startColumns": "4",
+                        "startOffsets": "55",
+                        "endLines": "10",
+                        "endColumns": "12",
+                        "endOffsets": "639"
+                    }
+                }
+            ]
+        }
+    ]
+}

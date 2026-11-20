@@ -1,0 +1,1526 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#08091f">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Orbit Hop">
+<meta property="og:title" content="Orbit Hop: how many planets can you clear?">
+<meta property="og:description" content="Tap at the right moment to sling your comet from planet to planet. One new map a day, the same map for everyone.">
+<meta property="og:url" content="https://vunguyenitcontact.github.io/quy-dao/">
+<meta property="og:image" content="https://vunguyenitcontact.github.io/quy-dao/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Orbit Hop">
+<title>Orbit Hop</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Tap at the right moment to sling your comet from planet to planet. One new map a day, the same map for everyone.">
+<link rel="stylesheet" href="fonts/fonts.css">
+<style>
+/* Layout: full-bleed canvas universe; HUD floats on top; menu = logo up top + control card at the bottom; result = centered card. Single deliberate night-sky look. */
+:root{
+  --space:#141243;
+  --space-deep:#08091f;
+  --ink:#f6f1ff;
+  --muted:#aaa4dc;
+  --comet:#7ef0ff;
+  --flare:#ff8fb1;
+  --sun:#ffd66b;
+  --sun-deep:#d99a2b;
+  --card:rgba(18,16,58,.74);
+  --line:rgba(190,180,255,.2);
+  --on-sun:#22154a;
+  /* Tektur: nét vuông kiểu bảng điều khiển tàu vũ trụ, cho tiêu đề và số. Exo 2: chữ thường. Cả hai có đủ dấu tiếng Việt. */
+  --f-display:'Tektur', 'Exo 2', 'Avenir Next Condensed', 'Arial Narrow', system-ui, sans-serif;
+  --f-body:'Exo 2', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  color-scheme:dark;
+}
+[hidden]{display:none!important}
+html,body{height:100%;margin:0;overflow:hidden}
+body{background:var(--space-deep);color:var(--ink);font-family:var(--f-body);font-size:15px;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+#cv{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:pointer}
+
+/* HUD */
+#hud{position:fixed;inset:0 0 auto;display:grid;grid-template-columns:1fr auto 1fr;align-items:start;gap:8px;
+  padding-top:calc(14px + env(safe-area-inset-top,0px));
+  padding-left:max(16px, env(safe-area-inset-left,0px));padding-right:max(16px, env(safe-area-inset-right,0px));pointer-events:none}
+.hud-l{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);line-height:1.5}
+.hud-l b{color:var(--ink);font-weight:700}
+.hud-c{text-align:center}
+#score{font-family:var(--f-display);font-weight:800;font-size:56px;line-height:.9;font-variant-numeric:tabular-nums;text-shadow:0 0 24px rgba(126,240,255,.45)}
+#combo{font-family:var(--f-display);font-weight:800;font-size:15px;color:var(--sun);letter-spacing:.08em;min-height:20px;transition:transform .15s}
+#combo.bump{transform:scale(1.25)}
+.hud-r{display:flex;justify-content:flex-end}
+.icon-btn{pointer-events:auto;width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:rgba(18,16,58,.5);color:var(--ink);display:grid;place-items:center;cursor:pointer}
+.icon-btn svg{width:20px;height:20px}
+
+/* Overlays */
+.overlay{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;overflow-y:auto;
+  padding-left:max(16px, env(safe-area-inset-left,0px));padding-right:max(16px, env(safe-area-inset-right,0px));
+  padding-block:calc(20px + env(safe-area-inset-top,0px)) calc(20px + env(safe-area-inset-bottom,0px))}
+#menu{justify-content:space-between;gap:20px;background:linear-gradient(180deg,rgba(8,9,31,0) 40%,rgba(8,9,31,.7) 100%)}
+#over{justify-content:center;background:rgba(8,9,31,.55)}
+.card{width:100%;max-width:420px;box-sizing:border-box;padding:22px;border-radius:24px;background:var(--card);border:1px solid var(--line);
+  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);display:flex;flex-direction:column;gap:14px;box-shadow:0 20px 60px rgba(0,0,0,.35)}
+
+.logo-wrap{text-align:center;margin-top:6vh}
+.lang{position:absolute;top:calc(14px + env(safe-area-inset-top,0px));right:max(16px, env(safe-area-inset-right,0px));display:flex;gap:2px;padding:3px;border-radius:12px;background:rgba(18,16,58,.6);border:1px solid var(--line)}
+.lang button{appearance:none;border:0;border-radius:9px;background:none;color:var(--muted);font:800 13px var(--f-display);letter-spacing:.06em;padding:7px 10px 6px;cursor:pointer;min-width:40px}
+.lang button[aria-pressed="true"]{background:var(--comet);color:var(--on-sun)}
+.lang button:focus-visible{outline:3px solid var(--comet);outline-offset:2px}
+.logo{font-family:var(--f-display);font-weight:800;font-size:clamp(60px,18vw,100px);line-height:.92;margin:0;letter-spacing:.01em;
+  text-shadow:0 0 40px rgba(126,240,255,.35),0 4px 0 rgba(0,0,0,.25);text-wrap:balance}
+.logo .l2{color:var(--sun)}
+.tag{margin:12px auto 0;max-width:30ch;color:var(--muted);font-size:15px;line-height:1.5}
+.eyebrow{margin:0;font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--comet)}
+
+.btn{appearance:none;border:0;cursor:pointer;font-family:var(--f-display);font-weight:800;font-size:20px;line-height:1.1;border-radius:16px;padding:14px 18px 12px;
+  color:var(--ink);background:rgba(255,255,255,.06);box-shadow:inset 0 0 0 1px var(--line);display:flex;flex-direction:column;align-items:center;gap:2px;transition:transform .08s}
+.btn small{font-family:var(--f-body);font-weight:600;font-size:12px;opacity:.75;letter-spacing:.02em}
+.btn:active{transform:translateY(2px)}
+.btn.primary{background:var(--sun);color:var(--on-sun);box-shadow:0 4px 0 var(--sun-deep)}
+.btn.primary:active{box-shadow:0 2px 0 var(--sun-deep)}
+.btn.hot{background:var(--flare);color:var(--on-sun);box-shadow:0 4px 0 #c45c80}
+.btn.hot:active{box-shadow:0 2px 0 #c45c80}
+.btn[disabled]{opacity:.45;cursor:not-allowed;transform:none}
+.btn:focus-visible,.icon-btn:focus-visible,.link:focus-visible{outline:3px solid var(--comet);outline-offset:3px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.link{appearance:none;background:none;border:0;color:var(--muted);font:inherit;font-size:14px;cursor:pointer;text-decoration:underline;text-underline-offset:3px;padding:4px;align-self:center}
+
+.how{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.how li{font-size:12px;line-height:1.35;color:var(--muted);text-align:center;padding:10px 6px;border-radius:12px;background:rgba(255,255,255,.04)}
+.how b{display:block;font-family:var(--f-display);font-size:16px;color:var(--ink);margin-bottom:2px}
+.best{margin:0;text-align:center;font-size:13px;color:var(--muted)}
+.best b{color:var(--sun)}
+
+.challenge{border-radius:16px;padding:12px 14px;background:linear-gradient(135deg,rgba(255,143,177,.22),rgba(255,214,107,.16));border:1px solid rgba(255,143,177,.45);font-size:14px;line-height:1.45}
+.challenge b{font-family:var(--f-display);font-size:22px;color:var(--sun)}
+
+/* Result */
+.result{text-align:center;align-items:stretch}
+.big{display:flex;align-items:baseline;justify-content:center;gap:8px}
+#o-score{font-family:var(--f-display);font-weight:800;font-size:88px;line-height:.85;font-variant-numeric:tabular-nums;text-shadow:0 0 30px rgba(255,214,107,.4)}
+.big small{font-family:var(--f-display);font-size:20px;color:var(--muted)}
+.badge{align-self:center;font-family:var(--f-display);font-weight:800;font-size:13px;letter-spacing:.1em;color:var(--on-sun);background:var(--comet);padding:3px 10px 1px;border-radius:999px}
+.rank{margin:0;font-family:var(--f-display);font-weight:800;font-size:24px;color:var(--sun);line-height:1.1}
+.reason{margin:0;color:var(--muted);font-size:14px}
+.vs{margin:0;font-weight:700;font-size:15px;padding:8px 10px;border-radius:12px}
+.vs.win{background:rgba(126,240,255,.14);color:var(--comet)}
+.vs.lose{background:rgba(255,143,177,.14);color:var(--flare)}
+.note{margin:0;font-size:14px;line-height:1.45;padding:10px 12px;border-radius:12px;background:rgba(255,214,107,.12);border:1px solid rgba(255,214,107,.4);color:var(--ink)}
+.note b{color:var(--sun)}
+.grid{display:grid;grid-template-columns:repeat(10,1fr);gap:3px;font-size:18px;line-height:1.25;padding:10px;border-radius:14px;background:rgba(0,0,0,.22)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0}
+.stats div{display:flex;flex-direction:column-reverse;gap:2px}
+.stats dt{font-size:11px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.stats dd{margin:0;font-family:var(--f-display);font-weight:800;font-size:26px;line-height:1;font-variant-numeric:tabular-nums}
+#o-text{width:100%;box-sizing:border-box;min-height:120px;border-radius:12px;background:rgba(0,0,0,.3);color:var(--ink);border:1px solid var(--line);padding:10px;font:13px/1.4 var(--f-body);-webkit-user-select:text;user-select:text}
+
+/* Leaderboard */
+#over,#board{justify-content:flex-start}
+#over>.card,#board>.card{margin-block:auto}
+#board{background:rgba(8,9,31,.78);z-index:5}
+.field{display:flex;gap:8px}
+.field input{flex:1;min-width:0;box-sizing:border-box;border-radius:14px;border:1px solid var(--line);background:rgba(0,0,0,.3);color:var(--ink);font:600 16px var(--f-body);padding:12px 14px;-webkit-user-select:text;user-select:text}
+.field input::placeholder{color:var(--muted);font-weight:400}
+.field input:focus-visible{outline:3px solid var(--comet);outline-offset:2px}
+.btn.small{font-size:16px;padding:10px 16px 8px;white-space:nowrap}
+.rankbox{display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:14px;background:rgba(126,240,255,.08);border:1px solid rgba(126,240,255,.3)}
+.rankbox p{margin:0;font-size:14px;line-height:1.4}
+.rankbox p b{font-family:var(--f-display);font-size:20px;color:var(--comet)}
+.boardcard{max-height:100%;min-height:0}
+.board-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.board-head h2{margin:0;font-family:var(--f-display);font-weight:800;font-size:28px;line-height:1}
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:4px;border-radius:14px;background:rgba(0,0,0,.25)}
+.tabs button{appearance:none;border:0;border-radius:10px;background:none;color:var(--muted);font:700 14px var(--f-body);padding:9px 4px;cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--sun);color:var(--on-sun)}
+.tabs button:focus-visible{outline:3px solid var(--comet);outline-offset:2px}
+.board-sub{margin:0;font-size:13px;color:var(--muted);text-align:center}
+.rows{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px;flex:1 1 auto;min-height:0;overflow-y:auto}
+.rows li,.row-me{display:grid;grid-template-columns:34px 1fr auto auto;align-items:center;gap:10px;padding:8px 10px;border-radius:12px;background:rgba(255,255,255,.04)}
+.row-more{appearance:none;border:0;background:none;color:var(--muted);width:32px;height:32px;border-radius:10px;cursor:pointer;display:grid;place-items:center;margin-right:-6px}
+.row-more svg{width:18px;height:18px}
+.row-more:focus-visible{outline:3px solid var(--comet);outline-offset:1px}
+.rules{margin:0;font-size:12px;line-height:1.4;color:var(--muted)}
+.rules a{color:var(--sun)}
+.board-hidden{margin:0;font-size:12px;color:var(--muted);text-align:center}
+.sheet{display:flex;flex-direction:column;gap:8px;padding:14px;border-radius:16px;background:rgba(0,0,0,.35);border:1px solid var(--line)}
+.sheet h3{margin:0 0 2px;font-family:var(--f-display);font-weight:800;font-size:18px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sheet p{margin:0 0 4px;font-size:13px;line-height:1.4;color:var(--muted)}
+.btn.plain{font-size:16px;padding:11px 14px 9px}
+.btn.danger{font-size:16px;padding:11px 14px 9px;background:rgba(255,143,177,.16);box-shadow:inset 0 0 0 1px rgba(255,143,177,.55);color:var(--flare)}
+.rows li.me,.row-me{background:rgba(126,240,255,.14);box-shadow:inset 0 0 0 1px rgba(126,240,255,.5)}
+.rk{font-family:var(--f-display);font-weight:800;font-size:17px;text-align:center;color:var(--muted);font-variant-numeric:tabular-nums}
+.rk.r1{color:var(--sun)}.rk.r2{color:#d7dbe8}.rk.r3{color:#e8a36b}
+.nm{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;text-align:left}
+.nm small{display:block;font-weight:400;font-size:11px;color:var(--muted)}
+.sc{font-family:var(--f-display);font-weight:800;font-size:20px;font-variant-numeric:tabular-nums}
+.board-state{margin:0;padding:18px 8px;text-align:center;color:var(--muted);font-size:14px;line-height:1.5}
+.board-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13px;color:var(--muted)}
+
+#toast{position:fixed;left:50%;bottom:calc(28px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);opacity:0;pointer-events:none;
+  background:var(--ink);color:var(--on-sun);font-weight:700;font-size:14px;padding:10px 16px;border-radius:999px;transition:all .25s;max-width:calc(100% - 32px);text-align:center;box-sizing:border-box}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+#banner{position:fixed;left:0;right:0;top:38%;text-align:center;pointer-events:none;font-family:var(--f-display);font-weight:800;font-size:clamp(28px,9vw,48px);color:var(--sun);
+  text-shadow:0 0 30px rgba(255,214,107,.6);opacity:0;transform:scale(.6);transition:all .3s cubic-bezier(.2,1.6,.4,1)}
+#banner.show{opacity:1;transform:scale(1)}
+@media (prefers-reduced-motion: reduce){ .btn,#toast,#banner,#combo{transition:none} }
+@media (max-height:640px){ .logo-wrap{margin-top:0} .how{display:none} #o-score{font-size:64px} }
+</style>
+</head>
+<body>
+
+<canvas id="cv" data-i18n-aria="canvasAria" aria-label="Game area: tap to launch the comet"></canvas>
+
+<div id="hud" hidden>
+  <div class="hud-l"><div id="h-mode"><b>Day #1</b></div><div id="h-sub"></div></div>
+  <div class="hud-c"><div id="score">0</div><div id="combo"></div></div>
+  <div class="hud-r"><button class="icon-btn" id="b-mute2" data-i18n-aria="muteAria" aria-label="Toggle sound"></button></div>
+</div>
+
+<div id="menu" class="overlay">
+  <div class="lang" role="group" aria-label="Language / Ngôn ngữ">
+    <button type="button" id="l-en" aria-pressed="true" aria-label="English">EN</button>
+    <button type="button" id="l-vi" aria-pressed="false" aria-label="Tiếng Việt">VI</button>
+  </div>
+  <div class="logo-wrap">
+    <p class="eyebrow" id="m-day">Day #1</p>
+    <h1 class="logo"><span id="logo1">Orbit</span><br><span id="logo2" class="l2">Hop</span></h1>
+    <p class="tag" data-i18n="tag">Tap at the right moment to sling your comet from planet to planet. One new map a day, the same map for everyone.</p>
+  </div>
+  <div class="card">
+    <div id="m-challenge" class="challenge" hidden></div>
+    <button id="b-challenge" class="btn hot" hidden><span data-i18n="accept">Accept challenge</span></button>
+    <button id="b-daily" class="btn primary"><span id="m-daily">Daily challenge</span><small id="m-left">3/3 tries left</small></button>
+    <div class="row" id="m-row">
+      <button id="b-free" class="btn"><span data-i18n="free">Free play</span><small data-i18n="freeSub">random map</small></button>
+      <button id="b-board" class="btn" hidden><span data-i18n="board">Ranking</span><small id="m-rank">today's top</small></button>
+    </div>
+    <ul class="how">
+      <li><b data-i18n="how1t">Tap</b><span data-i18n="how1">to leave orbit</span></li>
+      <li><b data-i18n="how2t">Fly</b><span data-i18n="how2">into the next planet's pull</span></li>
+      <li><b data-i18n="how3t">Hurry</b><span data-i18n="how3">launch before the ring runs out</span></li>
+    </ul>
+    <p class="best" id="m-best"></p>
+    <button class="link" id="b-mute">Sound: on</button>
+  </div>
+</div>
+
+<div id="over" class="overlay" hidden>
+  <div class="card result">
+    <p class="eyebrow" id="o-ctx">Day #1</p>
+    <span class="badge" id="o-new" data-i18n="newRecord" hidden>NEW BEST</span>
+    <div class="big"><span id="o-score">0</span><small data-i18n="pts">pts</small></div>
+    <p class="rank" id="o-rank"></p>
+    <p class="reason" id="o-reason"></p>
+    <p class="vs" id="o-vs" hidden></p>
+    <p class="note" id="o-note" hidden></p>
+    <div class="grid" id="o-grid" data-i18n-aria="gridAria" aria-label="Jump history"></div>
+    <dl class="stats">
+      <div><dt data-i18n="statPlanets">Planets</dt><dd id="o-planets">0</dd></div>
+      <div><dt data-i18n="statStreak">Best streak</dt><dd id="o-streak">0</dd></div>
+      <div><dt data-i18n="statBest">Best</dt><dd id="o-best">0</dd></div>
+    </dl>
+    <div class="rankbox" id="o-rankbox" hidden>
+      <p id="o-rankmsg"></p>
+      <form class="field" id="o-nameform" hidden>
+        <input id="name-input" type="text" maxlength="16" data-i18n-ph="namePh" placeholder="Your name" autocomplete="nickname" autocapitalize="words" enterkeyhint="done" data-i18n-aria="nameAria" aria-label="Name shown on the ranking">
+        <button class="btn primary small" type="submit" data-i18n="joinBoard">Submit</button>
+      </form>
+      <p class="rules" id="o-rules" hidden><span data-i18n="nameRules">By submitting a name you agree to the rules: names are public, and offensive names are not tolerated and get removed.</span> <a href="https://vunguyenitcontact.github.io/quy-dao/privacy.html#rules" target="_blank" rel="noopener" data-i18n="rulesLink">Read the rules</a></p>
+      <button class="link" id="b-board2" type="button" data-i18n="viewBoard">View ranking</button>
+    </div>
+    <div class="row">
+      <button id="b-retry" class="btn primary"><span id="o-retry">Play again</span><small id="o-left">Space</small></button>
+      <button id="b-share" class="btn hot"><span data-i18n="share">Share score</span><small data-i18n="shareSub">challenge friends</small></button>
+    </div>
+    <textarea id="o-text" hidden readonly data-i18n-aria="copyAria" aria-label="Result to copy"></textarea>
+    <button class="link" id="b-menu" data-i18n="backHome">Back to menu</button>
+  </div>
+</div>
+
+<div id="board" class="overlay" hidden>
+  <div class="card boardcard" role="dialog" aria-labelledby="bd-title">
+    <div class="board-head">
+      <h2 id="bd-title" data-i18n="boardTitle">Ranking</h2>
+      <button class="icon-btn" id="b-board-close" type="button" data-i18n-aria="closeBoard" aria-label="Close ranking"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+    <div class="tabs" role="tablist">
+      <button role="tab" type="button" data-tab="today" aria-selected="true" data-i18n="tabToday">Today</button>
+      <button role="tab" type="button" data-tab="yday" aria-selected="false" data-i18n="tabYday">Yesterday</button>
+      <button role="tab" type="button" data-tab="all" aria-selected="false" data-i18n="tabAll">All-time</button>
+    </div>
+    <p class="board-sub" id="bd-sub"></p>
+    <ol class="rows" id="bd-rows"></ol>
+    <div class="row-me" id="bd-me" hidden></div>
+    <p class="board-state" id="bd-state" hidden></p>
+    <p class="board-hidden" id="bd-hidden" hidden></p>
+    <div class="sheet" id="bd-sheet" hidden>
+      <h3 id="sh-name"></h3>
+      <p data-i18n="sheetHint">Report a name that is offensive, or hide this player on your device.</p>
+      <button class="btn danger" id="sh-report" type="button" data-i18n="sheetReport">Report this name</button>
+      <button class="btn plain" id="sh-hide" type="button" data-i18n="sheetHide">Hide this player</button>
+      <button class="link" id="sh-cancel" type="button" data-i18n="cancel">Cancel</button>
+    </div>
+    <div class="board-foot"><span id="bd-name"></span><button class="link" id="b-rename" type="button">Change name</button></div>
+    <form class="field" id="bd-nameform" hidden>
+      <input id="rename-input" type="text" maxlength="16" data-i18n-ph="namePh" placeholder="Your name" autocomplete="nickname" autocapitalize="words" enterkeyhint="done" data-i18n-aria="nameAria" aria-label="Name shown on the ranking">
+      <button class="btn primary small" type="submit" data-i18n="save">Save</button>
+    </form>
+    <p class="rules"><span data-i18n="nameRules">By submitting a name you agree to the rules: names are public, and offensive names are not tolerated and get removed.</span> <a href="https://vunguyenitcontact.github.io/quy-dao/privacy.html#rules" target="_blank" rel="noopener" data-i18n="rulesLink">Read the rules</a></p>
+  </div>
+</div>
+
+<div id="banner"></div>
+<div id="toast" role="status"></div>
+
+<script>
+(() => {
+'use strict';
+// Điền link chia sẻ công khai của game vào đây (để trống thì không chèn link)
+const SHARE_URL = 'https://vunguyenitcontact.github.io/quy-dao/';
+// Bảng xếp hạng (Supabase). Để trống cả hai thì game ẩn hẳn bảng xếp hạng.
+// SB_KEY là khoá CÔNG KHAI (anon / publishable), an toàn khi nằm trong mã nguồn: bảng điểm đã khoá, chỉ gọi được 3 hàm.
+const SB_URL = 'https://nomxgglbwziexlploehg.supabase.co';
+const SB_KEY = 'sb_publishable_TkAF_1FVW0_ifsMtYrrv-g_I7uRRgyk';
+// Cầu nối tới app iPhone / Android (chỉ có khi chạy trong app): rung và bảng chia sẻ của máy.
+// iPhone: window.webkit.messageHandlers.qd nhận object. Android: window.QDAndroid.postMessage nhận chuỗi JSON.
+const NATIVE = (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.qd)
+  || (window.QDAndroid ? { postMessage: m => window.QDAndroid.postMessage(JSON.stringify(m)) } : null);
+const DAILY_TRIES = 3;
+
+const $ = id => document.getElementById(id);
+const cv = $('cv'), ctx = cv.getContext('2d');
+const W = 400;                       // world width in units
+let dpr = 1, scale = 1, offX = 0, cssW = 0, cssH = 0, viewH = 0;
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const lerp = (a, b, t) => a + (b - a) * t;
+const TAU = Math.PI * 2;
+
+// localStorage có thể bị chặn (ẩn danh, khung xem bị khóa) → luôn giữ bản sao trong bộ nhớ để lượt chơi vẫn được đếm
+const mem = {};
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); if (v != null) return JSON.parse(v); } catch (e) {} return k in mem ? mem[k] : d; },
+  set(k, v) { mem[k] = v; try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+};
+
+/* ---------- language ---------- */
+// Hai ngôn ngữ: tiếng Anh (mặc định) và tiếng Việt. Thêm chữ mới thì thêm vào CẢ HAI bảng dưới đây.
+const FD = "'Tektur', 'Exo 2', system-ui, sans-serif";   // font tiêu đề, dùng cho chữ vẽ trên canvas
+const FB = "'Exo 2', system-ui, sans-serif";             // font chữ thường trên canvas
+const I18N = {
+  en: {
+    name1: 'Orbit', name2: 'Hop', title: 'Orbit Hop',
+    canvasAria: 'Game area: tap to launch the comet', muteAria: 'Toggle sound',
+    tag: 'Tap at the right moment to sling your comet from planet to planet. One new map a day, the same map for everyone.',
+    accept: 'Accept challenge', daily: 'Daily challenge', dailyOut: 'No tries left today',
+    triesLeft: (l, n) => `${l}/${n} tries left`, newMapIn: s => `new map in ${s}`, hm: (h, m) => `${h}h ${m}m`,
+    free: 'Free play', freeSub: 'random map', board: 'Ranking', boardSub: "today's top", rankShort: (r, n) => `rank #${r}/${n}`,
+    how1t: 'Tap', how1: 'to leave orbit', how2t: 'Fly', how2: "into the next planet's pull", how3t: 'Hurry', how3: 'launch before the ring runs out',
+    todayBest: s => `Today: <b>${s}</b> pts`, freeBest: s => `Free play best: <b>${s}</b>`,
+    challengeMsg: (s, d) => `A friend just scored <b>${s}</b> on the ${d} map. Can you beat them?`,
+    dayLabel: (n, d) => `Day #${n} · ${d}`, sound: on => `Sound: ${on ? 'on' : 'off'}`,
+    hudDay: n => `Day #${n}`, hudChallenge: d => `Challenge ${d}`, hudFree: 'Free play',
+    hudTry: (a, n) => `Try ${a}/${n}`, hudNeed: n => ` · need ${n}`, hudTarget: n => `Target: ${n}`, hudNoCount: 'Not counted today', hudBest: n => `Best: ${n}`,
+    toastFreeNow: n => `All ${n} tries used today. This is free play.`,
+    combo: n => `STREAK ×${n}`,
+    popWorm: 'WORMHOLE!', popSkip: 'PLANET SKIP!', popFever: 'SUPERNOVA!', popPerfectN: n => `PERFECT ×${n}`, popPerfect: 'PERFECT!', popGood: 'NICE', popEdge: 'CLOSE CALL!',
+    beatFriend: 'YOU BEAT YOUR FRIEND!', zoneBanner: (n, name) => `ZONE ${n} · ${name}`,
+    zones: ['Calm Reach', 'Hot Belt', 'Galactic Swirl', 'Black Hole Rim', 'The Infinite'],
+    shortcut: 'SHORTCUT +3', tapToLaunch: 'TAP TO LAUNCH', tapHint: 'when the dotted line points at the next planet',
+    ranks: ['Lost meteor', 'Rookie astronaut', 'Orbit hunter', 'Timing wizard', 'Gravity master', 'Galactic legend'],
+    reasons: {
+      crash: ['Out of time! Watch the countdown ring around the planet.', 'You waited too long and the planet pulled you down.'],
+      hot: ['The red dwarf burned you up. The clock runs faster here.', "Too hot! Red dwarfs don't let anyone linger."],
+      lost: ['Drifted into the void...', 'Flew right out of the galaxy.', 'Space is big, but not that big.'],
+      near: ['So close! Missed by a hair.', 'Skimmed right past the pull zone!']
+    },
+    overDaily: (n, a, m) => `Day #${n} · Try ${a}/${m}`, overChallenge: d => `Challenge · ${d} map`, overFree: 'Free play', zoneN: n => ` · Zone ${n}`,
+    newRecord: 'NEW BEST', pts: 'pts',
+    vsWin: (target, diff) => `You beat your friend (${target} pts) by ${diff}!`, vsLose: (diff, target) => `${diff} more to beat your friend (${target} pts).`,
+    statPlanets: 'Planets', statStreak: 'Best streak', statBest: 'Best',
+    retry: 'Play again', retryFree: 'Free play', leftToday: l => `${l} ${l === 1 ? 'try' : 'tries'} left today`, notCounted: 'not counted today', retryNow: 'go again', retrySpace: 'or press Space',
+    noteOut: (n, best, s) => `All ${n} tries used today. Your daily score is locked at <b>${best}</b>. Keep going in free play: random maps, not counted for today. New map in ${s}.`,
+    noteFree: best => `This is free play. Your daily score is still <b>${best}</b>.`,
+    share: 'Share score', shareSub: 'challenge friends', backHome: 'Back to menu', gridAria: 'Jump history', copyAria: 'Result to copy',
+    shHeadFree: s => `🌠 ORBIT HOP · Free play — ${s} pts`, shHead: (n, s) => `🌠 ORBIT HOP #${n} — ${s} pts`,
+    shLine: (p, z, zn, st) => `🪐 ${p} planets · Zone ${z} (${zn}) · 🔥 streak ${st}`, shRank: (r, n) => `🏆 Rank ${r}/${n} today`,
+    shTitle: r => `Title: ${r}`, shTry: u => `Play it 👉 ${u}`, shBeat: u => `Beat my score 👉 ${u}`, shCode: c => `Challenge code: ${c}`,
+    copied: 'Copied! Paste it in a chat to challenge your friends', copyManual: 'Select and copy the text below',
+    lbNeedName: "Enter a name to put your score on today's ranking.", lbSending: 'Sending your score…', lbSent: 'Score sent.',
+    lbRank: (r, n) => `Rank <b>#${r}</b> of ${n} ${n === 1 ? 'player' : 'players'} today`, lbYourBest: s => ` (your best: ${s})`,
+    lbSendFail: "Couldn't send your score. Check your connection. ", lbRejected: "The server didn't accept this score. ", retryLink: 'Try again',
+    namePh: 'Your name', nameAria: 'Name shown on the ranking', joinBoard: 'Submit', viewBoard: 'View ranking',
+    boardTitle: 'Ranking', closeBoard: 'Close ranking', tabToday: 'Today', tabYday: 'Yesterday', tabAll: 'All-time',
+    bdToday: (n, d) => `Map of day #${n} · ${d}`, bdYday: d => `Final results for ${d}`, bdAll: "Each player's best score ever",
+    bdPlayers: n => ` · ${n} ${n === 1 ? 'player' : 'players'}`, loading: 'Loading…',
+    bdEmptyToday: 'Nobody is on the board yet today. Play the Daily challenge to be first.', bdEmpty: 'No scores here yet.', bdFail: "Couldn't load the ranking. ",
+    yourName: n => `Your name: ${n}`, noName: "You haven't set a name", rename: 'Change name', setName: 'Set name', save: 'Save', you: ' (you)',
+    rowPlanets: n => `${n} ${n === 1 ? 'planet' : 'planets'}`, rowDay: d => ` · ${d}`,
+    rowMore: n => `Options for ${n}`, sheetHint: 'Report a name that is offensive, or hide this player on your device.',
+    sheetReport: 'Report this name', sheetHide: 'Hide this player', cancel: 'Cancel',
+    reported: 'Reported. Thank you. We review reports within 24 hours.', reportFail: "Couldn't send the report. Please try again.",
+    hiddenOne: 'Player hidden on this device', hiddenCount: n => `${n} hidden on this device. `, showAll: 'Show all',
+    nameRules: 'By submitting a name you agree to the rules: names are public, and offensive names are not tolerated and get removed.', rulesLink: 'Read the rules', nameBad: 'That name is not allowed. Please choose another.',
+    nameShort: 'Name needs at least 2 characters', nameSaved: 'Name saved', nameSavedNoSync: "Name saved, but the ranking hasn't updated yet"
+  },
+  vi: {
+    name1: 'Quỹ', name2: 'Đạo', title: 'Quỹ Đạo',
+    canvasAria: 'Màn chơi: chạm để phóng sao chổi', muteAria: 'Tắt/bật âm thanh',
+    tag: 'Chạm đúng lúc để phóng sao chổi qua từng hành tinh. Mỗi ngày một bản đồ mới, ai cũng chơi chung một bản đồ.',
+    accept: 'Nhận thách đấu', daily: 'Thử thách hôm nay', dailyOut: 'Hết lượt hôm nay',
+    triesLeft: (l, n) => `còn ${l}/${n} lượt`, newMapIn: s => `bản đồ mới sau ${s}`, hm: (h, m) => `${h} giờ ${m} phút`,
+    free: 'Chơi tự do', freeSub: 'bản đồ ngẫu nhiên', board: 'Xếp hạng', boardSub: 'top hôm nay', rankShort: (r, n) => `hạng #${r}/${n}`,
+    how1t: 'Chạm', how1: 'để rời quỹ đạo', how2t: 'Bay', how2: 'vào vùng hút hành tinh kế', how3t: 'Canh giờ', how3: 'phóng trước khi vòng đếm hết',
+    todayBest: s => `Hôm nay: <b>${s}</b> điểm`, freeBest: s => `Kỷ lục tự do: <b>${s}</b>`,
+    challengeMsg: (s, d) => `Một người bạn vừa đạt <b>${s}</b> điểm trên bản đồ ngày ${d}. Bạn có vượt mặt được không?`,
+    dayLabel: (n, d) => `Ngày #${n} · ${d}`, sound: on => `Âm thanh: ${on ? 'bật' : 'tắt'}`,
+    hudDay: n => `Ngày #${n}`, hudChallenge: d => `Thách đấu ${d}`, hudFree: 'Tự do',
+    hudTry: (a, n) => `Lượt ${a}/${n}`, hudNeed: n => ` · cần ${n}`, hudTarget: n => `Mục tiêu: ${n}`, hudNoCount: 'Không tính điểm ngày', hudBest: n => `Kỷ lục: ${n}`,
+    toastFreeNow: n => `Đã hết ${n} lượt hôm nay. Đây là chế độ tự do.`,
+    combo: n => `CHUỖI ×${n}`,
+    popWorm: 'LỖ SÂU!', popSkip: 'NHẢY CÓC!', popFever: 'SIÊU TÂN TINH!', popPerfectN: n => `HOÀN HẢO ×${n}`, popPerfect: 'HOÀN HẢO!', popGood: 'ỔN ÁP', popEdge: 'SÁT NÚT!',
+    beatFriend: 'VƯỢT MẶT BẠN BÈ!', zoneBanner: (n, name) => `VÙNG ${n} · ${name}`,
+    zones: ['Vùng yên bình', 'Vành đai nóng', 'Xoáy ngân hà', 'Rìa hố đen', 'Cõi vô cực'],
+    shortcut: 'LỐI TẮT +3', tapToLaunch: 'CHẠM ĐỂ PHÓNG', tapHint: 'khi đường chấm chỉ vào hành tinh kế tiếp',
+    ranks: ['Thiên thạch lạc lối', 'Phi hành gia tập sự', 'Thợ săn quỹ đạo', 'Thánh canh giờ', 'Bậc thầy trọng lực', 'Huyền thoại Ngân Hà'],
+    reasons: {
+      crash: ['Hết giờ! Để ý vòng đếm ngược quanh hành tinh nhé.', 'Chần chừ quá lâu, hành tinh đã kéo bạn xuống.'],
+      hot: ['Sao lùn đỏ thiêu rụi bạn. Ở đây đồng hồ chạy nhanh hơn.', 'Quá nóng! Sao lùn đỏ không cho ai nán lại lâu.'],
+      lost: ['Trôi vào hư vô...', 'Bay lạc khỏi dải Ngân Hà.', 'Vũ trụ rộng lắm, nhưng không rộng thế đâu.'],
+      near: ['Suýt nữa thôi! Hụt đúng một sợi tóc.', 'Sượt qua vùng hút trong gang tấc!']
+    },
+    overDaily: (n, a, m) => `Ngày #${n} · Lượt ${a}/${m}`, overChallenge: d => `Thách đấu · bản đồ ${d}`, overFree: 'Chế độ tự do', zoneN: n => ` · Vùng ${n}`,
+    newRecord: 'KỶ LỤC MỚI', pts: 'điểm',
+    vsWin: (target, diff) => `Bạn đã vượt mặt bạn bè (${target} điểm) thêm ${diff} điểm!`, vsLose: (diff, target) => `Còn thiếu ${diff} điểm để vượt mặt bạn bè (${target}).`,
+    statPlanets: 'Hành tinh', statStreak: 'Chuỗi đẹp nhất', statBest: 'Kỷ lục',
+    retry: 'Chơi lại', retryFree: 'Chơi tự do', leftToday: l => `còn ${l} lượt hôm nay`, notCounted: 'không tính điểm ngày', retryNow: 'thử lại ngay', retrySpace: 'hoặc bấm Space',
+    noteOut: (n, best, s) => `Bạn đã dùng hết ${n} lượt hôm nay. Điểm ngày chốt ở <b>${best}</b>. Chơi tiếp sẽ sang chế độ tự do: bản đồ ngẫu nhiên, không tính vào điểm ngày. Bản đồ mới sau ${s}.`,
+    noteFree: best => `Đây là chế độ tự do. Điểm ngày hôm nay của bạn vẫn là <b>${best}</b>.`,
+    share: 'Khoe điểm', shareSub: 'thách bạn bè', backHome: 'Về màn hình chính', gridAria: 'Lịch sử từng cú nhảy', copyAria: 'Kết quả để chép',
+    shHeadFree: s => `🌠 QUỸ ĐẠO · Tự do — ${s} điểm`, shHead: (n, s) => `🌠 QUỸ ĐẠO #${n} — ${s} điểm`,
+    shLine: (p, z, zn, st) => `🪐 ${p} hành tinh · Vùng ${z} (${zn}) · 🔥 chuỗi ${st}`, shRank: (r, n) => `🏆 Hạng ${r}/${n} hôm nay`,
+    shTitle: r => `Danh hiệu: ${r}`, shTry: u => `Chơi thử 👉 ${u}`, shBeat: u => `Vượt mặt mình đi 👉 ${u}`, shCode: c => `Mã thách đấu: ${c}`,
+    copied: 'Đã chép! Dán vào Messenger, Zalo hay TikTok để thách bạn bè', copyManual: 'Bôi đen và chép đoạn bên dưới nhé',
+    lbNeedName: 'Nhập tên để ghi điểm lên bảng xếp hạng hôm nay.', lbSending: 'Đang gửi điểm lên bảng xếp hạng…', lbSent: 'Đã gửi điểm.',
+    lbRank: (r, n) => `Hạng <b>#${r}</b> trong ${n} người chơi hôm nay`, lbYourBest: s => ` (điểm tốt nhất của bạn: ${s})`,
+    lbSendFail: 'Không gửi được điểm, kiểm tra mạng nhé. ', lbRejected: 'Máy chủ không nhận điểm này. ', retryLink: 'Thử lại',
+    namePh: 'Tên của bạn', nameAria: 'Tên hiện trên bảng xếp hạng', joinBoard: 'Lên bảng', viewBoard: 'Xem bảng xếp hạng',
+    boardTitle: 'Bảng xếp hạng', closeBoard: 'Đóng bảng xếp hạng', tabToday: 'Hôm nay', tabYday: 'Hôm qua', tabAll: 'Kỷ lục',
+    bdToday: (n, d) => `Bản đồ ngày #${n} · ${d}`, bdYday: d => `Kết quả chung cuộc ngày ${d}`, bdAll: 'Điểm cao nhất của mỗi người từ trước tới nay',
+    bdPlayers: n => ` · ${n} người chơi`, loading: 'Đang tải…',
+    bdEmptyToday: 'Chưa ai lên bảng hôm nay. Chơi Thử thách hôm nay để là người đầu tiên.', bdEmpty: 'Chưa có điểm nào ở đây.', bdFail: 'Không tải được bảng xếp hạng. ',
+    yourName: n => `Tên của bạn: ${n}`, noName: 'Bạn chưa đặt tên', rename: 'Đổi tên', setName: 'Đặt tên', save: 'Lưu', you: ' (bạn)',
+    rowPlanets: n => `${n} hành tinh`, rowDay: d => ` · ngày ${d}`,
+    rowMore: n => `Tuỳ chọn cho ${n}`, sheetHint: 'Báo cáo tên phản cảm, hoặc ẩn người chơi này trên máy bạn.',
+    sheetReport: 'Báo cáo tên này', sheetHide: 'Ẩn người chơi này', cancel: 'Huỷ',
+    reported: 'Đã báo cáo. Cảm ơn bạn. Báo cáo được xem trong vòng 24 giờ.', reportFail: 'Chưa gửi được báo cáo. Thử lại nhé.',
+    hiddenOne: 'Đã ẩn người chơi này trên máy bạn', hiddenCount: n => `Đang ẩn ${n} người trên máy này. `, showAll: 'Hiện lại',
+    nameRules: 'Gửi tên là bạn đồng ý với quy định: tên hiện công khai, tên phản cảm không được chấp nhận và sẽ bị gỡ.', rulesLink: 'Đọc quy định', nameBad: 'Tên này không được phép. Hãy chọn tên khác.',
+    nameShort: 'Tên cần ít nhất 2 ký tự', nameSaved: 'Đã lưu tên', nameSavedNoSync: 'Đã lưu tên, nhưng chưa cập nhật được lên bảng'
+  }
+};
+let lang = store.get('qd-lang', 'en');
+if (!I18N[lang]) lang = 'en';
+function t(key, ...args) {
+  let s = I18N[lang][key];
+  if (s == null) s = I18N.en[key];
+  return typeof s === 'function' ? s(...args) : s;
+}
+// Điền chữ cho các phần tử tĩnh có data-i18n (chữ), data-i18n-ph (placeholder), data-i18n-aria (aria-label)
+function applyLang() {
+  document.documentElement.lang = lang;
+  document.title = t('title'); $('logo1').textContent = t('name1'); $('logo2').textContent = t('name2');
+  for (const el of document.querySelectorAll('[data-i18n]')) el.textContent = t(el.dataset.i18n);
+  for (const el of document.querySelectorAll('[data-i18n-ph]')) el.placeholder = t(el.dataset.i18nPh);
+  for (const el of document.querySelectorAll('[data-i18n-aria]')) el.setAttribute('aria-label', t(el.dataset.i18nAria));
+  $('l-en').setAttribute('aria-pressed', lang === 'en' ? 'true' : 'false');
+  $('l-vi').setAttribute('aria-pressed', lang === 'vi' ? 'true' : 'false');
+  renderMute(); refreshMenu();
+  if (boardOpen) { boardFoot(); loadBoard(); }
+}
+function setLang(l) { if (!I18N[l] || l === lang) return; lang = l; store.set('qd-lang', l); applyLang(); }
+
+/* ---------- dates & seeds ---------- */
+// "Ngày" của game tính theo giờ Việt Nam (UTC+7) trên MỌI máy, để ai cũng chơi chung một bản đồ
+// và chung một bảng xếp hạng, bất kể máy đang để múi giờ nào.
+const VN_OFFSET = 7 * 3600e3, DAY_MS = 864e5;
+const ymdVN = ms => { const d = new Date(ms + VN_OFFSET); return d.getUTCFullYear() * 10000 + (d.getUTCMonth() + 1) * 100 + d.getUTCDate(); };
+const TODAY = ymdVN(Date.now());
+const dayNo = n => Math.round((Date.UTC(Math.floor(n / 10000), Math.floor(n / 100) % 100 - 1, n % 100) - Date.UTC(2026, 0, 1)) / 864e5) + 1;
+const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const fmtDate = n => lang === 'vi' ? (n % 100) + '/' + (Math.floor(n / 100) % 100) : (n % 100) + ' ' + MON[Math.floor(n / 100) % 100 - 1];
+const seedOf = n => (Math.imul(n, 2654435761) ^ 0x5bd1e995) >>> 0;
+const randSeed = () => (Math.random() * 4294967296) >>> 0;
+function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+
+/* ---------- audio ---------- */
+let ac = null, master = null, nbuf = null, echoIn = null, DIST = null;
+let muted = store.get('qd-mute', false);
+// Dựng chuỗi xử lý âm thanh trên ngữ cảnh `ac` hiện tại (tách riêng để còn kiểm thử được bằng ngữ cảnh ngoại tuyến)
+function wireAudio() {
+  master = ac.createGain(); master.gain.value = 0.55;
+  // nén nhẹ ở đầu ra để tiếng nổ nhiều lớp không bị vỡ tiếng
+  const comp = ac.createDynamicsCompressor();
+  comp.threshold.value = -16; comp.ratio.value = 5; comp.attack.value = 0.003; comp.release.value = 0.2;
+  master.connect(comp); comp.connect(ac.destination);
+  // nhánh vọng: delay có phản hồi, lọc bớt tiếng cao, cho cảm giác không gian rộng
+  echoIn = ac.createGain();
+  const dl = ac.createDelay(0.6), fb = ac.createGain(), lp = ac.createBiquadFilter();
+  dl.delayTime.value = 0.21; fb.gain.value = 0.36; lp.type = 'lowpass'; lp.frequency.value = 1400;
+  echoIn.connect(dl); dl.connect(lp); lp.connect(fb); fb.connect(dl); lp.connect(master);
+  // đường cong méo tiếng (tanh) làm tiếng trầm dày hơn
+  DIST = new Float32Array(512);
+  for (let i = 0; i < 512; i++) DIST[i] = Math.tanh((i / 255.5 - 1) * 2.6);
+}
+function audio() {
+  if (!ac) {
+    try {
+      ac = new (window.AudioContext || window.webkitAudioContext)();
+      wireAudio();
+    } catch (e) { ac = null; }
+  }
+  if (ac && ac.state === 'suspended') ac.resume();
+}
+function tone(f, dur, type = 'sine', vol = 0.2, slide = 0, delay = 0) {
+  if (!ac || muted) return;
+  const t = ac.currentTime + delay, o = ac.createOscillator(), g = ac.createGain();
+  o.type = type; o.frequency.setValueAtTime(f, t);
+  if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(30, f * slide), t + dur);
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.012); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g).connect(master); o.start(t); o.stop(t + dur + 0.03);
+}
+function noise(dur, vol, f0, f1, type = 'bandpass') {
+  if (!ac || muted) return;
+  if (!nbuf) { nbuf = ac.createBuffer(1, ac.sampleRate, ac.sampleRate); const d = nbuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; }
+  const t = ac.currentTime, s = ac.createBufferSource(), fl = ac.createBiquadFilter(), g = ac.createGain();
+  s.buffer = nbuf; fl.type = type; fl.Q.value = 1.2;
+  fl.frequency.setValueAtTime(f0, t); fl.frequency.exponentialRampToValueAtTime(f1, t + dur);
+  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  s.connect(fl).connect(g).connect(master); s.start(t); s.stop(t + dur + 0.02);
+}
+// Một lớp nhiễu trắng qua bộ lọc quét tần số, bắt đầu tại thời điểm t. echo = lượng gửi sang nhánh vọng.
+function burst(t, dur, vol, f0, f1, type, echo = 0, q = 0.8) {
+  if (!nbuf) { nbuf = ac.createBuffer(1, ac.sampleRate, ac.sampleRate); const d = nbuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; }
+  const src = ac.createBufferSource(), fl = ac.createBiquadFilter(), g = ac.createGain();
+  src.buffer = nbuf; src.loop = true;
+  fl.type = type; fl.Q.value = q; fl.frequency.setValueAtTime(f0, t); fl.frequency.exponentialRampToValueAtTime(f1, t + dur);
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.008);
+  g.gain.exponentialRampToValueAtTime(vol * 0.3, t + dur * 0.4); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);   // giảm nhanh rồi kéo đuôi
+  src.connect(fl); fl.connect(g); g.connect(master);
+  if (echo) { const e = ac.createGain(); e.gain.value = echo; g.connect(e); e.connect(echoIn); }
+  src.start(t, Math.random() * 0.4); src.stop(t + dur + 0.05);
+}
+// Tiếng nổ nhiều lớp: tiếng "rắc" mở đầu, tiếng ầm trầm, cú đấm tầm trung, thân nổ quét tần số có vọng, rồi mảnh vỡ lách tách.
+function boom(kind) {
+  if (!ac || muted) return;
+  const t = ac.currentTime + 0.005;
+  burst(t, 0.07, 0.5, 7000, 3000, 'highpass');
+  const o = ac.createOscillator(), ws = ac.createWaveShaper(), g = ac.createGain();
+  o.type = 'sine'; o.frequency.setValueAtTime(160, t); o.frequency.exponentialRampToValueAtTime(34, t + 0.55);
+  ws.curve = DIST;
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.85, t + 0.012); g.gain.exponentialRampToValueAtTime(0.3, t + 0.4); g.gain.exponentialRampToValueAtTime(0.0001, t + 1.4);
+  o.connect(ws); ws.connect(g); g.connect(master); o.start(t); o.stop(t + 1.45);
+  // cú đấm tầm trung: loa điện thoại không phát được âm trầm, lớp này giúp vẫn nghe rõ tiếng nổ
+  const o2 = ac.createOscillator(), g2 = ac.createGain();
+  o2.type = 'triangle'; o2.frequency.setValueAtTime(320, t); o2.frequency.exponentialRampToValueAtTime(70, t + 0.22);
+  g2.gain.setValueAtTime(0.0001, t); g2.gain.exponentialRampToValueAtTime(0.4, t + 0.008); g2.gain.exponentialRampToValueAtTime(0.0001, t + 0.3);
+  o2.connect(g2); g2.connect(master); o2.start(t); o2.stop(t + 0.35);
+  burst(t, 1.3, 0.6, 3400, 110, 'lowpass', 0.5);
+  burst(t + 0.05, 1.7, 0.3, 500, 60, 'lowpass', 0.5);                 // tiếng ầm kéo dài phía sau
+  burst(t + 0.02, 0.5, 0.25, 1800, 500, 'bandpass', 0.3, 0.6);
+  for (let i = 0; i < 10; i++) burst(t + 0.1 + Math.random() * 0.75, 0.025 + Math.random() * 0.05, 0.16 * (1 - i / 14), 1800 + Math.random() * 5000, 900, 'bandpass', 0.4, 4);
+  if (kind === 'hot') burst(t + 0.05, 1.0, 0.12, 5000, 9000, 'highpass');   // tiếng xèo khi bị sao lùn đỏ thiêu
+}
+const NOTES = [523.25, 587.33, 659.25, 783.99, 880, 1046.5, 1174.66, 1318.51, 1567.98, 1760, 2093];
+const sfx = {
+  launch() { noise(0.16, 0.14, 700, 2600); tone(240, 0.14, 'sine', 0.07, 2.2); },
+  catchQ(q, streak) {
+    if (q === 2) { const n = NOTES[Math.min(streak - 1, NOTES.length - 1)]; tone(n, 0.4, 'triangle', 0.2); tone(n * 1.5, 0.3, 'sine', 0.07, 0, 0.05); }
+    else if (q === 1) tone(392, 0.28, 'triangle', 0.16);
+    else { tone(330, 0.22, 'triangle', 0.14); tone(311, 0.2, 'sine', 0.06, 0, 0.06); }
+  },
+  skip() { [0, 0.07, 0.14].forEach((d, i) => tone(NOTES[4 + i * 2], 0.25, 'triangle', 0.14, 0, d)); },
+  worm() { tone(260, 0.55, 'sine', 0.16, 6); tone(520, 0.5, 'triangle', 0.08, 3, 0.06); noise(0.4, 0.1, 400, 3000); },
+  tick() { tone(1500, 0.04, 'square', 0.035); },
+  die(kind) { boom(kind); },
+  win() { [0, 0.1, 0.2, 0.32].forEach((d, i) => tone(NOTES[3 + i * 2], 0.4, 'triangle', 0.15, 0, d)); }
+};
+function buzz(p) {
+  if (NATIVE) { try { NATIVE.postMessage({ type: 'haptic', kind: Array.isArray(p) ? (p[0] >= 30 ? 'die' : 'perfect') : 'tap' }); } catch (e) {} return; }
+  try { navigator.vibrate && navigator.vibrate(p); } catch (e) {}
+}
+
+/* ---------- world generation ---------- */
+const PALS = [
+  ['#ffd0b0', '#f07f6a', '#7a2e4a'], ['#c8ffe4', '#4fcfaa', '#1b5e63'], ['#e3d6ff', '#9b7bff', '#3b2391'],
+  ['#fff1b8', '#ffc24b', '#9a4f13'], ['#c9ecff', '#58a8ff', '#1d3b8f'], ['#ffd2ea', '#ff7cbc', '#7d1f5b']
+];
+function makePlanet(R, x, y, r, cap, w, life, amp, f, ph) {
+  const craters = [];
+  for (let i = 0; i < 3; i++) craters.push({ a: R() * TAU, dd: R() * 0.55, s: 0.12 + R() * 0.16 });
+  return { bx: x, x, y, r, cap, w, life, amp, f, ph, kind: 'normal', pal: PALS[Math.floor(R() * PALS.length)], ring: R() < 0.28, tilt: R() * 0.6 - 0.3, craters };
+}
+const HOT = ['#fff0c2', '#ff7a3d', '#8f1d1d'];
+const ZONE_COUNT = 5;   // tên các vùng nằm trong bảng dịch (zones)
+const ZTINT = ['', 'rgba(255,96,40,0.13)', 'rgba(40,200,255,0.12)', 'rgba(160,50,255,0.17)', 'rgba(255,40,120,0.17)'];
+const zoneOf = i => Math.floor(i / 10);
+const zoneName = i => t('zones')[Math.min(ZONE_COUNT - 1, zoneOf(i))];
+function genPlanet(g, i) {
+  const R = g.rng;
+  if (i === 0) return makePlanet(R, 200, 0, 36, 92, 2.3, 12, 0, 0, 0);
+  const prev = g.planets[i - 1], d = Math.min(1, (i - 1) / 40);
+  let r = lerp(32, 17, d) + R() * 7;
+  let gap = lerp(44, 26, d) + R() * 7;
+  let w = lerp(2.3, 3.6, d) + R() * 0.45;
+  let life = lerp(12, 5, d);              // số giây được bay quanh hành tinh: 12s lúc đầu, giảm dần, không dưới 5s
+  const roll = R();
+  let kind = 'normal';
+  if (i >= 10 && roll < lerp(0.16, 0.3, d)) { kind = 'hot'; w *= 1.2; life = Math.max(3.5, life * 0.6); }
+  else if (i >= 4 && roll > 0.9) { kind = 'giant'; r = 44 + R() * 8; gap = 40; w *= 0.72; }
+  const cap = r + gap;
+  const y = prev.y - (lerp(185, 255, d) + R() * 45) - (kind === 'giant' ? 30 : 0);
+  let amp = 0, f = 0, ph = 0;
+  if (i > 5 && kind !== 'giant' && R() < lerp(0.15, 0.65, d)) { amp = lerp(22, 56, d) * (0.6 + R() * 0.4); f = 0.2 + R() * lerp(0.2, 0.3, d); ph = R() * TAU; }
+  const lo = 30 + cap * 0.5 + amp, hi = W - lo;
+  let x, tries = 0;
+  do { x = lo + R() * (hi - lo); tries++; } while (Math.abs(x - prev.bx) < 60 && tries < 6);
+  const P = makePlanet(R, x, y, r, cap, w, life, amp, f, ph);
+  P.kind = kind;
+  if (kind === 'hot') { P.pal = HOT; P.ring = false; }
+  // lỗ sâu: mục tiêu nhỏ nằm lệch đường giữa hành tinh trước và hành tinh này, trúng thì nhảy 3 hành tinh
+  if (i >= 5 && i - g.lastWorm >= 5 && R() < 0.24) {
+    const wx = P.bx > W / 2 ? 45 + R() * 70 : W - 45 - R() * 70;
+    const wy = (prev.y + P.y) / 2 + (R() - 0.5) * 40, wr = 20;
+    if (Math.hypot(wx - P.bx, wy - P.y) > P.cap + P.amp + wr + 18 && Math.hypot(wx - prev.bx, wy - prev.y) > prev.cap + prev.amp + wr + 18) {
+      g.worms.push({ x: wx, y: wy, r: wr, from: i - 1, dest: i + 2, used: false });
+      g.lastWorm = i;
+    }
+  }
+  return P;
+}
+function ensure(g, upto) { while (g.planets.length <= upto) g.planets.push(genPlanet(g, g.planets.length)); }
+
+function newRun(seed, opts = {}) {
+  const g = {
+    rng: mulberry32(seed), planets: [], T: 0, cam: 0, score: 0, maxIdx: 0, streak: 0, bestStreak: 0, grid: [],
+    trail: [], parts: [], rings: [], pops: [], shake: 0, auto: !!opts.auto, over: false, deadT: 0, shown: false,
+    minRatio: 9, target: opts.target || 0, beat: false, date: opts.date || 0, death: '', worms: [], lastWorm: 0, wormCount: 0, flash: 0,
+    comet: { state: 'ready', p: 0, th: -Math.PI / 2, w: 2.3, t: 0, tAll: 1, rho0: 0, rhoEntry: 0, decay: 0, rho: 0, x: 0, y: 0, vx: 0, vy: 0, from: 0, ft: 0, nextTick: 0 }
+  };
+  ensure(g, 8);
+  const P = g.planets[0], c = g.comet;
+  c.rho0 = c.rhoEntry = c.rho = P.r + (P.cap - P.r) * 0.72;
+  g.cam = P.y - viewH * 0.66;
+  return g;
+}
+
+/* ---------- game logic ---------- */
+function launch(g) {
+  const c = g.comet;
+  if (c.state !== 'ready' && c.state !== 'orbit') return;
+  const s = Math.sign(c.w) || 1, V = 600;
+  c.vx = -Math.sin(c.th) * s * V; c.vy = Math.cos(c.th) * s * V;
+  c.from = c.p; c.state = 'fly'; c.ft = 0; g.minRatio = 9;
+  const P = g.planets[c.p];
+  for (let i = 0; i < 8; i++) spawn(g, c.x, c.y, -c.vx * 0.15 + (Math.random() - 0.5) * 120, -c.vy * 0.15 + (Math.random() - 0.5) * 120, 0.35, P.pal[1], 2);
+  if (!g.auto) { sfx.launch(); buzz(6); }
+}
+
+function capture(g, j, worm) {
+  const c = g.comet, P = g.planets[j];
+  if (worm) { c.x = P.x; c.y = P.y + P.cap * 0.98; c.vx = 600; c.vy = 0; g.trail.length = 0; }
+  const rx = c.x - P.x, ry = c.y - P.y, d = Math.hypot(rx, ry), sp = Math.hypot(c.vx, c.vy);
+  const perp = Math.abs(rx * c.vy / sp - ry * c.vx / sp);
+  const ratio = perp / P.cap;
+  const q = worm ? 1 : ratio < 0.28 ? 2 : ratio < 0.62 ? 1 : 0;
+  const s = Math.sign(rx * c.vy - ry * c.vx) || 1;
+  // sau lỗ sâu: hoãn đồng hồ 0.6s để camera kịp đuổi theo
+  Object.assign(c, { state: 'orbit', p: j, th: Math.atan2(ry, rx), w: s * P.w, t: worm ? -0.6 : 0, tAll: 0, rhoEntry: d, rho0: P.r + (P.cap - P.r) * 0.72, nextTick: 0 });
+  c.decay = (c.rho0 - (P.r + 5)) / P.life;
+  ensure(g, j + 8);
+
+  if (j > g.maxIdx) {
+    const gained = j - g.maxIdx, zBefore = zoneOf(g.maxIdx);
+    g.maxIdx = j;
+    let pts = gained;
+    if (worm) { pts += 2; g.wormCount++; }
+    else {
+      if (gained > 1) pts += 2;
+      if (q === 2) { g.streak++; pts += Math.min(g.streak, 5); } else g.streak = 0;
+    }
+    g.bestStreak = Math.max(g.bestStreak, g.streak);
+    g.score += pts;
+    g.grid.push(worm ? '🌀' : gained > 1 ? '🚀' : q === 2 ? '🟩' : q === 1 ? '🟨' : '🟧');
+    const fever = !worm && q === 2 && g.streak === 5;
+    const label = worm ? t('popWorm') : gained > 1 ? t('popSkip') : fever ? t('popFever') : q === 2 ? (g.streak >= 3 ? t('popPerfectN', g.streak) : t('popPerfect')) : q === 1 ? t('popGood') : t('popEdge');
+    const col = worm ? '#c9b5ff' : gained > 1 ? '#7ef0ff' : q === 2 ? '#ffd66b' : q === 1 ? '#f6f1ff' : '#ff9f6b';
+    pop(g, c.x, c.y - 26, label, col, fever ? 26 : q === 2 || worm ? 22 : 18);
+    pop(g, c.x, c.y - 4, '+' + pts, col, 16, 0.12);
+    if (!g.auto) {
+      if (worm) sfx.worm(); else if (gained > 1) sfx.skip(); else sfx.catchQ(q, g.streak);
+      buzz(q === 2 || worm ? [10, 30, 14] : 8);
+      hudScore(g);
+      if (g.target && !g.beat && g.score > g.target) { g.beat = true; banner(t('beatFriend')); sfx.win(); }
+      else if (zoneOf(j) > zBefore) { banner(t('zoneBanner', zoneOf(j) + 1, zoneName(j).toUpperCase())); sfx.win(); }
+    }
+  } else { g.streak = 0; if (!g.auto) { sfx.catchQ(0, 0); hudScore(g); } }
+
+  const n = q === 2 ? 26 : 14;
+  for (let i = 0; i < n; i++) { const a = Math.random() * TAU, v = 60 + Math.random() * (q === 2 ? 220 : 140); spawn(g, c.x, c.y, Math.cos(a) * v, Math.sin(a) * v, 0.5 + Math.random() * 0.4, Math.random() < 0.5 ? P.pal[0] : P.pal[1], 2.4); }
+  g.rings.push({ x: P.x, y: P.y, r: P.r, max: P.cap * (q === 2 ? 1.6 : 1.2), life: 0, dur: 0.5, col: q === 2 ? '#ffd66b' : P.pal[1], p: P });
+  g.shake = Math.max(g.shake, q === 2 ? 5 : 2);
+}
+
+function die(g, kind) {
+  const c = g.comet;
+  if (c.state === 'dead') return;
+  c.state = 'dead'; g.over = true;
+  g.death = kind === 'lost' && g.minRatio < 1.35 ? 'near' : kind === 'crash' && g.planets[c.p].kind === 'hot' ? 'hot' : kind;
+  g.grid.push('💥');
+  // tia lửa nhanh bắn xa + mảnh vỡ chậm, hai vòng sóng xung kích và một chớp sáng
+  for (let i = 0; i < 70; i++) {
+    const a = Math.random() * TAU, fast = i < 24, v = fast ? 260 + Math.random() * 380 : 40 + Math.random() * 240;
+    spawn(g, c.x, c.y, Math.cos(a) * v, Math.sin(a) * v, 0.5 + Math.random() * (fast ? 0.4 : 0.9), fast ? '#fff3c4' : ['#ff8fb1', '#ffd66b', '#7ef0ff', '#ff9a4a'][i % 4], fast ? 2 : 3.4);
+  }
+  const at = { x: c.x, y: c.y };
+  g.rings.push({ r: 6, max: 160, life: 0, dur: 0.6, col: '#ffffff', p: at }, { r: 4, max: 90, life: 0, dur: 0.45, col: '#ffd66b', p: at });
+  g.flash = 1;
+  g.shake = 18;
+  if (!g.auto) { sfx.die(g.death); buzz([30, 40, 60]); }
+}
+
+function update(g, dt) {
+  g.T += dt;
+  for (const p of g.planets) p.x = p.amp ? p.bx + p.amp * Math.sin(p.f * g.T * TAU + p.ph) : p.bx;
+  const c = g.comet;
+
+  if (c.state === 'ready' || c.state === 'orbit') {
+    const P = g.planets[c.p];
+    c.th += c.w * dt; c.tAll += dt;
+    if (c.state === 'orbit') c.t += dt;
+    c.rho = c.rho0 - c.decay * Math.max(0, c.t) + (c.rhoEntry - c.rho0) * Math.exp(-c.tAll * 9);
+    c.x = P.x + Math.cos(c.th) * c.rho; c.y = P.y + Math.sin(c.th) * c.rho;
+    if (c.state === 'orbit') {
+      const left = (c.rho - (P.r + 5)) / c.decay;
+      if (!g.auto && left < 1.2 && c.t > c.nextTick) { sfx.tick(); c.nextTick = c.t + 0.26; }
+      if (c.rho <= P.r + 5) die(g, 'crash');
+    }
+    if (g.auto && c.tAll > 0.3 && c.state !== 'dead') autopilot(g);
+  } else if (c.state === 'fly') {
+    c.x += c.vx * dt; c.y += c.vy * dt; c.ft += dt;
+    for (let j = 0; j < g.planets.length; j++) {
+      if (j === c.from) continue;
+      const P = g.planets[j], d = Math.hypot(c.x - P.x, c.y - P.y);
+      if (j > c.from) g.minRatio = Math.min(g.minRatio, d / P.cap);
+      if (d < P.cap) { capture(g, j); break; }
+    }
+    if (c.state === 'fly') for (const wm of g.worms) {
+      if (wm.used || wm.dest <= c.from || Math.hypot(c.x - wm.x, c.y - wm.y) > wm.r + 4) continue;
+      wm.used = true;
+      for (let i = 0; i < 24; i++) { const a = Math.random() * TAU, v = 50 + Math.random() * 200; spawn(g, wm.x, wm.y, Math.cos(a) * v, Math.sin(a) * v, 0.6, i % 2 ? '#7ef0ff' : '#c9b5ff', 2.6); }
+      ensure(g, wm.dest + 8);
+      capture(g, wm.dest, true);
+      break;
+    }
+    if (c.state === 'fly') {
+      const xmin = -offX / scale, xmax = (cssW - offX) / scale;
+      if (c.x < xmin - 20 || c.x > xmax + 20 || c.y > g.cam + viewH + 30 || c.ft > 1.4) die(g, 'lost');
+    }
+  }
+
+  if (c.state !== 'dead') { g.trail.push(c.x, c.y); if (g.trail.length > 56) g.trail.splice(0, 2); }
+  else if (g.trail.length) g.trail.splice(0, 4);
+
+  for (let i = g.parts.length - 1; i >= 0; i--) { const p = g.parts[i]; p.life += dt; if (p.life > p.dur) { g.parts.splice(i, 1); continue; } p.x += p.vx * dt; p.y += p.vy * dt; p.vx *= 0.96; p.vy *= 0.96; }
+  for (let i = g.rings.length - 1; i >= 0; i--) { const r = g.rings[i]; r.life += dt; if (r.life > r.dur) g.rings.splice(i, 1); }
+  for (let i = g.pops.length - 1; i >= 0; i--) { const p = g.pops[i]; p.life += dt; if (p.life > p.dur + p.delay) g.pops.splice(i, 1); }
+  g.shake *= Math.pow(0.02, dt);
+  g.flash *= Math.pow(0.0015, dt);
+
+  // camera
+  const ref = g.planets[c.state === 'fly' ? c.from : c.p];
+  let target = ref.y - viewH * 0.66;
+  if (c.state === 'fly') target = Math.min(target, c.y - viewH * 0.42);
+  const camK = Math.abs(target - g.cam) > viewH * 0.7 ? 8 : 4;
+  g.cam = Number.isFinite(g.cam) ? g.cam + (target - g.cam) * Math.min(1, dt * camK) : target;
+
+  if (g.over) { g.deadT += dt; if (!g.shown && g.deadT > 0.85) { g.shown = true; onGameOver(g); } }
+}
+
+function autopilot(g) {
+  const c = g.comet, N = g.planets[c.p + 1];
+  if (!N) return;
+  const s = Math.sign(c.w) || 1, ux = -Math.sin(c.th) * s, uy = Math.cos(c.th) * s;
+  const rx = N.x - c.x, ry = N.y - c.y, along = rx * ux + ry * uy;
+  if (along > 0 && Math.abs(rx * uy - ry * ux) < N.cap * 0.14) launch(g);
+}
+
+function spawn(g, x, y, vx, vy, dur, col, size) { g.parts.push({ x, y, vx, vy, life: 0, dur, col, size }); }
+function pop(g, x, y, text, col, size, delay = 0) { g.pops.push({ x, y, text, col, size, life: 0, dur: 0.9, delay }); }
+
+/* ---------- rendering ---------- */
+let stars = [];
+function makeStars() {
+  stars = [];
+  const n = Math.round(cssW * cssH / 2400);
+  for (let i = 0; i < n; i++) stars.push({ x: Math.random() * cssW, y: Math.random() * cssH, z: [0.06, 0.16, 0.34][i % 3], s: Math.random() * 1.3 + 0.3, a: Math.random() * 0.6 + 0.3, tw: Math.random() * TAU });
+}
+const NEB = [[0.2, 0.25, 'rgba(124,90,255,0.20)'], [0.85, 0.6, 'rgba(255,110,170,0.13)'], [0.4, 0.95, 'rgba(70,200,255,0.12)']];
+
+function draw(g) {
+  const now = performance.now() / 1000;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const bg = ctx.createLinearGradient(0, 0, 0, cssH);
+  bg.addColorStop(0, '#1b1756'); bg.addColorStop(1, '#08091f');
+  ctx.fillStyle = bg; ctx.fillRect(0, 0, cssW, cssH);
+  const tint = ZTINT[Math.min(ZTINT.length - 1, zoneOf(g.maxIdx))];
+  if (tint) { ctx.fillStyle = tint; ctx.fillRect(0, 0, cssW, cssH); }
+  const camPx = g.cam * scale;
+  const big = Math.max(cssW, cssH);
+  for (const [nx, ny, col] of NEB) {
+    const yy = ((ny * cssH * 1.6 - camPx * 0.04) % (cssH * 1.6) + cssH * 1.6) % (cssH * 1.6) - cssH * 0.3;
+    const gr = ctx.createRadialGradient(nx * cssW, yy, 0, nx * cssW, yy, big * 0.55);
+    gr.addColorStop(0, col); gr.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = gr; ctx.fillRect(0, 0, cssW, cssH);
+  }
+  for (const s of stars) {
+    const y = ((s.y - camPx * s.z) % cssH + cssH) % cssH;
+    ctx.globalAlpha = s.a * (0.7 + 0.3 * Math.sin(now * 2 + s.tw));
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(s.x, y, s.s, s.s);
+  }
+  ctx.globalAlpha = 1;
+
+  let sx = 0, sy = 0;
+  if (g.shake > 0.3 && !reduceMotion) { sx = (Math.random() - 0.5) * g.shake; sy = (Math.random() - 0.5) * g.shake; }
+  ctx.setTransform(dpr * scale, 0, 0, dpr * scale, dpr * (offX + sx), dpr * (sy - g.cam * scale));
+
+  const c = g.comet, top = g.cam - 140, bot = g.cam + viewH + 140;
+  const cur = c.state === 'fly' ? c.from : c.p;
+
+  // capture zones
+  for (let j = 0; j < g.planets.length; j++) {
+    const P = g.planets[j];
+    if (P.y < top || P.y > bot || j === cur) continue;
+    const next = j === cur + 1;
+    ctx.beginPath(); ctx.arc(P.x, P.y, P.cap, 0, TAU);
+    ctx.fillStyle = hexA(P.pal[1], next ? 0.09 : 0.045); ctx.fill();
+    ctx.setLineDash([4, 7]); ctx.lineDashOffset = -now * 12;
+    ctx.strokeStyle = hexA(P.pal[0], next ? 0.55 : 0.2); ctx.lineWidth = next ? 1.6 : 1; ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // current orbit ring + danger
+  if (c.state === 'orbit' || c.state === 'ready') {
+    const P = g.planets[c.p];
+    const span = c.rho0 - (P.r + 5);
+    const danger = c.state === 'ready' ? 0 : Math.max(0, Math.min(1, 1 - (c.rho - (P.r + 5)) / span));
+    const left = c.state === 'orbit' && c.decay ? (c.rho - (P.r + 5)) / c.decay : 99;   // giây còn lại
+    const pulse = left < 1.5 ? 0.5 + 0.5 * Math.sin(now * 22) : 1;
+    ctx.beginPath(); ctx.arc(P.x, P.y, c.rho, 0, TAU);
+    const hotK = Math.max(0, Math.min(1, 1 - left / 3));   // đỏ dần trong 3 giây cuối
+    ctx.strokeStyle = hotK > 0 ? `rgba(255,${Math.round(lerp(220, 90, hotK))},${Math.round(lerp(220, 120, hotK))},${0.35 + 0.45 * hotK * pulse})` : 'rgba(246,241,255,0.3)';
+    ctx.lineWidth = 1.5 + hotK * 1.5; ctx.stroke();
+    // vòng đếm ngược: phần cung còn lại = thời gian còn lại trước khi rơi
+    if (c.state === 'orbit') {
+      ctx.beginPath(); ctx.arc(P.x, P.y, P.cap + 4, -Math.PI / 2, -Math.PI / 2 + TAU * Math.max(0.001, 1 - danger));
+      ctx.strokeStyle = left < 2 ? `rgba(255,143,177,${0.6 + 0.4 * pulse})` : left < 4 ? 'rgba(255,214,107,0.9)' : 'rgba(246,241,255,0.75)';
+      ctx.lineWidth = 3.5; ctx.lineCap = 'round'; ctx.stroke(); ctx.lineCap = 'butt';
+    }
+    // training-wheel aim line on the first two planets
+    if (!g.auto && c.p < 2 && g.maxIdx < 2) {
+      const s = Math.sign(c.w) || 1, ux = -Math.sin(c.th) * s, uy = Math.cos(c.th) * s;
+      ctx.setLineDash([2, 8]); ctx.beginPath(); ctx.moveTo(c.x, c.y); ctx.lineTo(c.x + ux * 170, c.y + uy * 170);
+      ctx.strokeStyle = 'rgba(126,240,255,0.45)'; ctx.lineWidth = 2; ctx.stroke(); ctx.setLineDash([]);
+    }
+  }
+
+  // shock rings
+  for (const r of g.rings) {
+    const t = r.life / r.dur, rr = lerp(r.r, r.max, 1 - Math.pow(1 - t, 3));
+    ctx.beginPath(); ctx.arc(r.p.x, r.p.y, rr, 0, TAU);
+    ctx.strokeStyle = hexA(r.col, (1 - t) * 0.8); ctx.lineWidth = 3 * (1 - t) + 0.5; ctx.stroke();
+  }
+
+  // wormholes
+  for (const wm of g.worms) {
+    if (wm.used || wm.y < top || wm.y > bot) continue;
+    const live = wm.from >= cur;
+    ctx.globalAlpha = live ? 1 : 0.25;
+    const wg = ctx.createRadialGradient(wm.x, wm.y, 0, wm.x, wm.y, wm.r * 2.2);
+    wg.addColorStop(0, 'rgba(201,181,255,0.45)'); wg.addColorStop(1, 'rgba(201,181,255,0)');
+    ctx.fillStyle = wg; ctx.beginPath(); ctx.arc(wm.x, wm.y, wm.r * 2.2, 0, TAU); ctx.fill();
+    ctx.save(); ctx.translate(wm.x, wm.y); ctx.rotate(now * 2.4); ctx.lineCap = 'round';
+    for (let k = 0; k < 3; k++) {
+      ctx.beginPath(); ctx.arc(0, 0, wm.r * (1 - k * 0.3), k * 2.1, k * 2.1 + 4.2);
+      ctx.strokeStyle = k % 2 ? 'rgba(126,240,255,0.95)' : 'rgba(201,181,255,0.95)'; ctx.lineWidth = 3 - k * 0.6; ctx.stroke();
+    }
+    ctx.restore(); ctx.lineCap = 'butt';
+    if (live) {
+      ctx.fillStyle = '#c9b5ff'; ctx.textAlign = 'center'; ctx.font = '800 13px ' + FD;
+      ctx.fillText(t('shortcut'), wm.x, wm.y + wm.r + 18);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // planets
+  for (let j = 0; j < g.planets.length; j++) {
+    const P = g.planets[j];
+    if (P.y > bot + 800) P.sprite = null;
+    if (P.y < top || P.y > bot) continue;
+    drawPlanet(P, j < cur ? 0.5 : 1);
+  }
+
+  // hint under first planet
+  if (!g.auto && c.state === 'ready') {
+    const P = g.planets[0];
+    ctx.globalAlpha = 0.6 + 0.4 * Math.sin(now * 5);
+    ctx.fillStyle = '#ffd66b'; ctx.textAlign = 'center'; ctx.font = '800 22px ' + FD;
+    ctx.fillText(t('tapToLaunch'), P.x, P.y + P.cap + 34);
+    ctx.font = '600 13px ' + FB; ctx.fillStyle = '#f6f1ff';
+    ctx.fillText(t('tapHint'), P.x, P.y + P.cap + 56);
+    ctx.globalAlpha = 1;
+  }
+
+  // trail
+  const tr = g.trail, n = tr.length / 2;
+  ctx.lineCap = 'round';
+  for (let i = 1; i < n; i++) {
+    const k = i / n;
+    ctx.beginPath(); ctx.moveTo(tr[i * 2 - 2], tr[i * 2 - 1]); ctx.lineTo(tr[i * 2], tr[i * 2 + 1]);
+    const fever = g.streak >= 5;
+    ctx.strokeStyle = fever ? `rgba(255,${Math.round(lerp(120, 230, k))},${Math.round(lerp(60, 150, k))},${k * 0.95})`
+      : `rgba(${Math.round(lerp(255, 126, k))},${Math.round(lerp(143, 240, k))},${Math.round(lerp(177, 255, k))},${k * 0.85})`;
+    ctx.lineWidth = 0.6 + k * (fever ? 9 : 6); ctx.stroke();
+  }
+
+  // comet
+  if (c.state !== 'dead') {
+    const gl = ctx.createRadialGradient(c.x, c.y, 0, c.x, c.y, 20);
+    gl.addColorStop(0, 'rgba(126,240,255,0.65)'); gl.addColorStop(1, 'rgba(126,240,255,0)');
+    ctx.fillStyle = gl; ctx.beginPath(); ctx.arc(c.x, c.y, 20, 0, TAU); ctx.fill();
+    ctx.fillStyle = g.streak >= 3 ? '#ffd66b' : '#ffffff';
+    ctx.beginPath(); ctx.arc(c.x, c.y, 5, 0, TAU); ctx.fill();
+  }
+
+  // particles
+  ctx.globalCompositeOperation = 'lighter';
+  for (const p of g.parts) {
+    const t = 1 - p.life / p.dur;
+    ctx.globalAlpha = t; ctx.fillStyle = p.col;
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.size * (0.4 + t * 0.6), 0, TAU); ctx.fill();
+  }
+  ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
+
+  // pop texts
+  ctx.textAlign = 'center';
+  for (const p of g.pops) {
+    const t = (p.life - p.delay) / p.dur;
+    if (t < 0) continue;
+    const s = t < 0.15 ? lerp(0.6, 1.15, t / 0.15) : lerp(1.15, 1, Math.min(1, (t - 0.15) / 0.2));
+    ctx.globalAlpha = t > 0.65 ? 1 - (t - 0.65) / 0.35 : 1;
+    ctx.font = `800 ${Math.round(p.size * s)}px ${FD}`;
+    ctx.fillStyle = 'rgba(8,9,31,0.6)'; ctx.fillText(p.text, p.x + 1.5, p.y - t * 30 + 2);
+    ctx.fillStyle = p.col; ctx.fillText(p.text, p.x, p.y - t * 30);
+  }
+  ctx.globalAlpha = 1;
+
+  // chớp sáng khi nổ (bỏ qua nếu người chơi bật giảm chuyển động)
+  if (g.flash > 0.02 && !reduceMotion) {
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.fillStyle = `rgba(255,236,210,${(0.3 * g.flash).toFixed(3)})`;
+    ctx.fillRect(0, 0, cssW, cssH);
+  }
+}
+
+/* ---------- planet art ---------- */
+// Mỗi hành tinh được vẽ chi tiết MỘT lần vào một canvas riêng (sprite), rồi mỗi khung hình chỉ dán lại ảnh đó:
+// đẹp hơn mà không chậm đi. Chi tiết lấy từ một bộ số ngẫu nhiên riêng tính theo vị trí hành tinh,
+// không đụng tới bộ số sinh bản đồ, nên bản đồ mỗi ngày giữ nguyên.
+function planetSprite(P) {
+  const k = dpr * scale;
+  if (P.sprite && P.sprite.k === k) return P.sprite;
+  const rnd = mulberry32((Math.imul(Math.round(P.bx * 13), 73856093) ^ Math.imul(Math.round(-P.y), 19349663) ^ Math.round(P.r * 977)) >>> 0);
+  const pickStyle = rnd();
+  const style = P.kind === 'hot' ? 'lava' : P.kind === 'giant' ? 'gas' : pickStyle < 0.36 ? 'rock' : pickStyle < 0.7 ? 'terra' : 'gas';
+  const R = P.r * k, pad = Math.ceil(R * 0.3) + 3, size = Math.ceil((R + pad) * 2), c = size / 2;
+  const cvs = document.createElement('canvas'); cvs.width = cvs.height = size;
+  const x = cvs.getContext('2d');
+  const lite = P.pal[0], mid = P.pal[1], dark = P.pal[2];
+
+  // quầng khí quyển quanh hành tinh
+  const halo = x.createRadialGradient(c, c, R * 0.9, c, c, R + pad);
+  halo.addColorStop(0, hexA(style === 'lava' ? '#ff9a4a' : lite, 0.42)); halo.addColorStop(1, hexA(lite, 0));
+  x.fillStyle = halo; x.beginPath(); x.arc(c, c, R + pad, 0, TAU); x.fill();
+
+  x.save(); x.beginPath(); x.arc(c, c, R, 0, TAU); x.clip();
+  // nền
+  if (style === 'lava') { const b = x.createRadialGradient(c, c, 0, c, c, R); b.addColorStop(0, '#6b2414'); b.addColorStop(1, '#2b0a0a'); x.fillStyle = b; }
+  else { const b = x.createRadialGradient(c - R * 0.3, c - R * 0.35, R * 0.1, c, c, R * 1.05); b.addColorStop(0, mixA(lite, mid, 0.35, 1)); b.addColorStop(0.6, mid); b.addColorStop(1, mixA(mid, dark, 0.6, 1)); x.fillStyle = b; }
+  x.fillRect(0, 0, size, size);
+
+  if (style === 'gas') {
+    // hành tinh khí: các dải mây lượn sóng và một mắt bão
+    x.save(); x.translate(c, c); x.rotate(P.tilt * 0.6);
+    let y0 = -R * 1.1, i = 0;
+    while (y0 < R * 1.1) {
+      const h = R * (0.1 + rnd() * 0.2), amp = R * (0.015 + rnd() * 0.035), f = (2 + rnd() * 3) / R, ph = rnd() * TAU;
+      x.fillStyle = i % 2 ? mixA(lite, '#ffffff', 0.25, 0.26 + rnd() * 0.2) : mixA(dark, mid, 0.3, 0.3 + rnd() * 0.25);
+      x.beginPath(); x.moveTo(-R * 1.1, y0);
+      for (let px = -R * 1.1; px <= R * 1.1; px += R / 8) x.lineTo(px, y0 + Math.sin(px * f + ph) * amp);
+      for (let px = R * 1.1; px >= -R * 1.1; px -= R / 8) x.lineTo(px, y0 + h + Math.sin(px * f + ph + 1.3) * amp);
+      x.closePath(); x.fill();
+      y0 += h * (0.9 + rnd() * 0.5); i++;
+    }
+    const sx = (rnd() - 0.5) * R * 0.9, sy = (rnd() - 0.2) * R * 0.6, sw = R * (0.16 + rnd() * 0.12);
+    x.fillStyle = mixA(dark, mid, 0.2, 0.55); x.beginPath(); x.ellipse(sx, sy, sw, sw * 0.55, 0, 0, TAU); x.fill();
+    x.strokeStyle = hexA(lite, 0.6); x.lineWidth = Math.max(1, R * 0.03); x.beginPath(); x.ellipse(sx, sy, sw * 0.7, sw * 0.33, 0, 0, TAU); x.stroke();
+    x.restore();
+  } else if (style === 'rock') {
+    // hành tinh đá: mảng tối lớn và các hố va chạm có gờ sáng, bóng đổ
+    for (let i = 0; i < 3; i++) {
+      const a = rnd() * TAU, d = rnd() * R * 0.6;
+      x.fillStyle = hexA(dark, 0.18); x.beginPath(); x.arc(c + Math.cos(a) * d, c + Math.sin(a) * d, R * (0.3 + rnd() * 0.25), 0, TAU); x.fill();
+    }
+    const n = 6 + Math.floor(rnd() * 5);
+    for (let i = 0; i < n; i++) {
+      const a = rnd() * TAU, d = Math.sqrt(rnd()) * R * 0.82, cr = R * (0.06 + rnd() * rnd() * 0.2), px = c + Math.cos(a) * d, py = c + Math.sin(a) * d;
+      x.fillStyle = hexA(dark, 0.45); x.beginPath(); x.arc(px, py, cr, 0, TAU); x.fill();
+      x.lineWidth = Math.max(1, cr * 0.22);
+      x.strokeStyle = hexA(lite, 0.6); x.beginPath(); x.arc(px, py, cr, -0.15 * Math.PI, 0.65 * Math.PI); x.stroke();          // vách hố đón sáng (dưới phải)
+      x.strokeStyle = 'rgba(8,9,31,0.35)'; x.beginPath(); x.arc(px, py, cr * 0.9, 0.85 * Math.PI, 1.65 * Math.PI); x.stroke();   // vách hố khuất sáng (trên trái)
+    }
+  } else if (style === 'terra') {
+    // hành tinh có lục địa, mũ băng hai cực và mây
+    for (let i = 0; i < 4; i++) {
+      const a = rnd() * TAU, d = rnd() * R * 0.7, bx = c + Math.cos(a) * d, by = c + Math.sin(a) * d, m = 5 + Math.floor(rnd() * 4), br = R * (0.14 + rnd() * 0.14);
+      x.fillStyle = mixA(dark, mid, 0.3, 0.72); x.beginPath();
+      for (let j = 0; j < m; j++) {
+        const aa = rnd() * TAU, dd = rnd() * br * 1.3, rr = br * (0.5 + rnd() * 0.7), ex = bx + Math.cos(aa) * dd, ey = by + Math.sin(aa) * dd * 0.7;
+        x.moveTo(ex + rr, ey); x.arc(ex, ey, rr, 0, TAU);
+      }
+      x.fill();
+    }
+    x.fillStyle = 'rgba(255,255,255,0.75)';
+    x.beginPath(); x.ellipse(c, c - R * 0.98, R * 0.55, R * 0.2, 0, 0, TAU); x.fill();
+    x.beginPath(); x.ellipse(c, c + R * 0.99, R * 0.45, R * 0.16, 0, 0, TAU); x.fill();
+    x.strokeStyle = 'rgba(255,255,255,0.42)'; x.lineCap = 'round';
+    for (let i = 0; i < 5; i++) {
+      const yy = c + (rnd() - 0.5) * R * 1.5, xx = c + (rnd() - 0.5) * R * 1.2, w = R * (0.25 + rnd() * 0.5);
+      x.lineWidth = R * (0.05 + rnd() * 0.06);
+      x.beginPath(); x.moveTo(xx - w / 2, yy); x.quadraticCurveTo(xx, yy - R * 0.1 * (rnd() - 0.3), xx + w / 2, yy + R * 0.04); x.stroke();
+    }
+  } else {
+    // sao lùn đỏ: vỏ tối, vết nứt và hồ dung nham phát sáng
+    const cracks = [];
+    for (let i = 0; i < 7; i++) {
+      const a = rnd() * TAU, d0 = rnd() * R * 0.5;
+      let px = c + Math.cos(a) * d0, py = c + Math.sin(a) * d0, dir = rnd() * TAU;
+      const pts = [[px, py]], steps = 4 + Math.floor(rnd() * 4);
+      for (let st = 0; st < steps; st++) { dir += (rnd() - 0.5) * 1.4; px += Math.cos(dir) * R * 0.2; py += Math.sin(dir) * R * 0.2; pts.push([px, py]); }
+      cracks.push(pts);
+    }
+    x.lineCap = 'round'; x.lineJoin = 'round';
+    const strokeAll = (col, w) => { x.strokeStyle = col; x.lineWidth = w; for (const pts of cracks) { x.beginPath(); pts.forEach((q, i) => (i ? x.lineTo(q[0], q[1]) : x.moveTo(q[0], q[1]))); x.stroke(); } };
+    strokeAll('rgba(255,110,40,0.35)', R * 0.16); strokeAll('rgba(255,170,60,0.8)', R * 0.07); strokeAll('#fff3c4', R * 0.025);
+    for (let i = 0; i < 4; i++) {
+      const a = rnd() * TAU, d = rnd() * R * 0.75, px = c + Math.cos(a) * d, py = c + Math.sin(a) * d, rr = R * (0.14 + rnd() * 0.18);
+      const gl = x.createRadialGradient(px, py, 0, px, py, rr);
+      gl.addColorStop(0, 'rgba(255,240,180,0.95)'); gl.addColorStop(0.4, 'rgba(255,150,50,0.7)'); gl.addColorStop(1, 'rgba(255,90,30,0)');
+      x.fillStyle = gl; x.beginPath(); x.arc(px, py, rr, 0, TAU); x.fill();
+    }
+  }
+
+  // nửa tối: ánh sáng chiếu từ phía trên bên trái
+  const sh = x.createRadialGradient(c - R * 0.45, c - R * 0.5, R * 0.55, c - R * 0.1, c - R * 0.1, R * 1.25);
+  sh.addColorStop(0, 'rgba(8,9,31,0)'); sh.addColorStop(1, `rgba(8,9,31,${style === 'lava' ? 0.4 : 0.66})`);
+  x.fillStyle = sh; x.fillRect(0, 0, size, size);
+  // viền sáng của khí quyển
+  const rim = x.createRadialGradient(c, c, R * 0.82, c, c, R);
+  rim.addColorStop(0, hexA(lite, 0)); rim.addColorStop(1, hexA(lite, 0.3));
+  x.fillStyle = rim; x.fillRect(0, 0, size, size);
+  // đốm phản sáng
+  const sp = x.createRadialGradient(c - R * 0.42, c - R * 0.46, 0, c - R * 0.42, c - R * 0.46, R * 0.5);
+  sp.addColorStop(0, 'rgba(255,255,255,0.38)'); sp.addColorStop(1, 'rgba(255,255,255,0)');
+  x.fillStyle = sp; x.fillRect(0, 0, size, size);
+  x.restore();
+
+  P.sprite = { cvs, size, k, style };
+  return P.sprite;
+}
+// Vành đai: ba dải ê-líp; nửa sau vẽ trước hành tinh, nửa trước vẽ đè lên
+function ringArc(P, a0, a1, front) {
+  const r = P.r;
+  ctx.save(); ctx.translate(P.x, P.y); ctx.rotate(P.tilt);
+  for (const [m, al, w] of [[1.42, 0.5, 2.2], [1.62, 0.8, 3.2], [1.8, 0.4, 1.6]]) {
+    ctx.beginPath(); ctx.ellipse(0, 0, r * m, r * m * 0.24, 0, a0, a1);
+    ctx.strokeStyle = hexA(P.pal[0], al * (front ? 1 : 0.55)); ctx.lineWidth = w * r / 30; ctx.stroke();
+  }
+  ctx.restore();
+}
+function drawPlanet(P, alpha) {
+  ctx.globalAlpha = alpha;
+  const { x, y, r } = P;
+  if (P.kind === 'hot') {
+    const pu = 0.75 + 0.25 * Math.sin(performance.now() / 110), ag = ctx.createRadialGradient(x, y, r * 0.8, x, y, r * 2);
+    ag.addColorStop(0, `rgba(255,120,50,${0.55 * pu})`); ag.addColorStop(1, 'rgba(255,120,50,0)');
+    ctx.fillStyle = ag; ctx.beginPath(); ctx.arc(x, y, r * 2, 0, TAU); ctx.fill();
+  }
+  const ringed = P.ring || P.kind === 'giant';
+  if (ringed) ringArc(P, Math.PI, TAU, false);
+  const s = planetSprite(P), d = s.size / s.k;
+  ctx.drawImage(s.cvs, x - d / 2, y - d / 2, d, d);
+  if (ringed) ringArc(P, 0, Math.PI, true);
+  ctx.globalAlpha = 1;
+}
+
+const hexCache = {};
+function rgbOf(hex) {
+  let rgb = hexCache[hex];
+  if (!rgb) { const v = parseInt(hex.slice(1), 16); rgb = hexCache[hex] = [(v >> 16) & 255, (v >> 8) & 255, v & 255]; }
+  return rgb;
+}
+function hexA(hex, a) { const rgb = rgbOf(hex); return `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${a.toFixed(3)})`; }
+// pha hai màu theo tỉ lệ k (0 = màu thứ nhất), độ đục a
+function mixA(h1, h2, k, a) { const p = rgbOf(h1), q = rgbOf(h2); return `rgba(${Math.round(lerp(p[0], q[0], k))},${Math.round(lerp(p[1], q[1], k))},${Math.round(lerp(p[2], q[2], k))},${a.toFixed(3)})`; }
+
+/* ---------- sizing ---------- */
+function resize() {
+  cssW = window.innerWidth || document.documentElement.clientWidth || 400;
+  cssH = window.innerHeight || document.documentElement.clientHeight || 700;
+  dpr = Math.min(2, window.devicePixelRatio || 1);
+  cv.width = Math.round(cssW * dpr); cv.height = Math.round(cssH * dpr);
+  const colW = Math.min(cssW, cssH * 0.62, 520);
+  scale = colW / W; offX = (cssW - colW) / 2; viewH = cssH / scale;
+  makeStars();
+}
+
+/* ---------- UI state ---------- */
+let state = 'menu', game = null, attract = null, mode = 'daily', attemptNo = 0;
+let challenge = null;
+function readHash() {
+  const m = /^#?vs-(\d{1,4})-(\d{8})$/.exec(location.hash || '');
+  challenge = null;
+  if (m) { const date = +m[2]; if (date <= TODAY && date > 20260000) challenge = { score: +m[1], date }; }
+}
+readHash();
+window.addEventListener('hashchange', () => { readHash(); if (state === 'menu') refreshMenu(); });
+
+const RANK_AT = [0, 10, 25, 50, 90, 150];   // mốc điểm của từng danh hiệu; tên danh hiệu nằm trong bảng dịch (ranks)
+const rankOf = s => { let i = 0; RANK_AT.forEach((v, k) => { if (s >= v) i = k; }); return t('ranks')[i]; };
+const pick = a => a[Math.floor(Math.random() * a.length)];
+
+function getDaily() { const d = store.get('qd-daily', null); return d && d.date === TODAY ? d : { date: TODAY, used: 0, best: 0, runs: [] }; }
+function saveDaily(d) { store.set('qd-daily', d); }
+
+function refreshMenu() {
+  const d = getDaily(), left = DAILY_TRIES - d.used;
+  $('m-day').textContent = t('dayLabel', dayNo(TODAY), fmtDate(TODAY));
+  const bd = $('b-daily');
+  if (left > 0) { bd.disabled = false; $('m-daily').textContent = t('daily'); $('m-left').textContent = t('triesLeft', left, DAILY_TRIES); }
+  else { bd.disabled = true; $('m-daily').textContent = t('dailyOut'); $('m-left').textContent = t('newMapIn', untilMidnight()); }
+  const fb = store.get('qd-best', 0);
+  const parts = [];
+  if (d.used) parts.push(t('todayBest', d.best));
+  if (fb) parts.push(t('freeBest', fb));
+  $('m-best').innerHTML = parts.join(' · ');
+  $('m-best').hidden = !parts.length;
+  if (challenge) {
+    $('m-challenge').hidden = false; $('b-challenge').hidden = false;
+    $('m-challenge').innerHTML = t('challengeMsg', challenge.score, fmtDate(challenge.date));
+  } else { $('m-challenge').hidden = true; $('b-challenge').hidden = true; }
+  if (LB_ON) menuRank();
+}
+function untilMidnight() {
+  // tới nửa đêm giờ Việt Nam, lúc bản đồ đổi cho mọi người
+  const mins = Math.max(1, Math.round((DAY_MS - (Date.now() + VN_OFFSET) % DAY_MS) / 60000));
+  return t('hm', Math.floor(mins / 60), mins % 60);
+}
+
+function startRun(md) {
+  audio();
+  let seed, target = 0, date = 0;
+  if (md === 'daily') {
+    const d = getDaily();
+    if (d.used >= DAILY_TRIES) { md = 'free'; }
+    else { d.used++; saveDaily(d); attemptNo = d.used; seed = seedOf(TODAY); date = TODAY; if (challenge && challenge.date === TODAY) target = challenge.score; }
+  }
+  if (md === 'challenge') { seed = seedOf(challenge.date); date = challenge.date; target = challenge.score; }
+  if (md === 'free') seed = randSeed();
+  mode = md;
+  game = newRun(seed, { target, date });
+  state = 'play';
+  $('menu').hidden = true; $('over').hidden = true; $('hud').hidden = false; $('o-text').hidden = true;
+  const hb = document.createElement('b');
+  hb.textContent = md === 'daily' ? t('hudDay', dayNo(TODAY)) : md === 'challenge' ? t('hudChallenge', fmtDate(date)) : t('hudFree');
+  $('h-mode').replaceChildren(hb);
+  $('h-sub').textContent = md === 'daily' ? t('hudTry', attemptNo, DAILY_TRIES) + (target ? t('hudNeed', target + 1) : '') : target ? t('hudTarget', target + 1) : getDaily().used >= DAILY_TRIES ? t('hudNoCount') : t('hudBest', store.get('qd-best', 0));
+  if (md === 'free' && getDaily().used >= DAILY_TRIES) toast(t('toastFreeNow', DAILY_TRIES));
+  hudScore(game);
+}
+function acceptChallenge() {
+  if (challenge.date === TODAY && getDaily().used < DAILY_TRIES) startRun('daily'); else startRun('challenge');
+}
+
+let lastScore = -1, lastStreak = -1;
+function hudScore(g) {
+  if (g.score !== lastScore) { $('score').textContent = g.score; lastScore = g.score; }
+  if (g.streak !== lastStreak) {
+    const el = $('combo');
+    el.textContent = g.streak >= 2 ? t('combo', g.streak) : '';
+    el.classList.remove('bump'); void el.offsetWidth; if (g.streak >= 2) el.classList.add('bump');
+    lastStreak = g.streak;
+  }
+}
+
+function onGameOver(g) {
+  if (g.auto) { attract = newRun(randSeed(), { auto: true }); return; }
+  state = 'over';
+  let best, isNew = false;
+  if (mode === 'daily') {
+    const d = getDaily(); d.runs.push(g.score);
+    if (g.score > d.best || d.bestPlanets == null) { isNew = g.score > d.best && d.runs.length > 1; d.best = Math.max(d.best, g.score); d.bestPlanets = g.maxIdx; d.bestStreak = g.bestStreak; }
+    saveDaily(d); best = d.best;
+  } else if (mode === 'free') {
+    const fb = store.get('qd-best', 0);
+    if (g.score > fb) { store.set('qd-best', g.score); isNew = fb > 0; }
+    best = Math.max(fb, g.score);
+  } else {
+    const k = 'qd-ch-' + g.date, cb = store.get(k, 0);
+    if (g.score > cb) store.set(k, g.score);
+    best = Math.max(cb, g.score);
+  }
+  $('o-ctx').textContent = (mode === 'daily' ? t('overDaily', dayNo(TODAY), attemptNo, DAILY_TRIES) : mode === 'challenge' ? t('overChallenge', fmtDate(g.date)) : t('overFree')) + t('zoneN', zoneOf(g.maxIdx) + 1);
+  $('o-new').hidden = !isNew;
+  $('o-score').textContent = g.score;
+  $('o-rank').textContent = rankOf(g.score);
+  $('o-reason').textContent = pick(t('reasons')[g.death] || t('reasons').lost);
+  const vs = $('o-vs');
+  if (g.target) {
+    vs.hidden = false;
+    if (g.score > g.target) { vs.className = 'vs win'; vs.textContent = t('vsWin', g.target, g.score - g.target); }
+    else { vs.className = 'vs lose'; vs.textContent = t('vsLose', g.target - g.score + 1, g.target); }
+  } else vs.hidden = true;
+  const cells = gridCells(g.grid);
+  $('o-grid').innerHTML = cells.map(e => `<span>${e}</span>`).join('');
+  $('o-planets').textContent = g.maxIdx;
+  $('o-streak').textContent = g.bestStreak;
+  $('o-best').textContent = best;
+  const retry = $('b-retry'), note = $('o-note'), dd = getDaily();
+  note.hidden = true;
+  if (mode === 'daily') {
+    const left = DAILY_TRIES - dd.used;
+    $('o-retry').textContent = left > 0 ? t('retry') : t('retryFree');
+    $('o-left').textContent = left > 0 ? t('leftToday', left) : t('notCounted');
+    if (left <= 0) {
+      note.hidden = false;
+      note.innerHTML = t('noteOut', DAILY_TRIES, dd.best, untilMidnight());
+    }
+  } else {
+    $('o-retry').textContent = t('retry'); $('o-left').textContent = matchMedia('(pointer: coarse)').matches ? t('retryNow') : t('retrySpace');
+    if (mode === 'free' && dd.used >= DAILY_TRIES) { note.hidden = false; note.innerHTML = t('noteFree', dd.best); }
+  }
+  $('hud').hidden = true;
+  $('over').hidden = false;
+  retry.focus({ preventScroll: true });
+  showRankBox(g);
+}
+function gridCells(grid) { return grid.length <= 40 ? grid.slice() : grid.slice(0, 38).concat('…', grid[grid.length - 1]); }
+
+function shareText(g) {
+  const head = mode === 'free' ? t('shHeadFree', g.score) : t('shHead', dayNo(g.date), g.score);
+  const cells = gridCells(g.grid), rows = [];
+  for (let i = 0; i < cells.length; i += 10) rows.push(cells.slice(i, i + 10).join(''));
+  const lines = [head, t('shLine', g.maxIdx, zoneOf(g.maxIdx) + 1, zoneName(g.maxIdx), g.bestStreak), ...rows, t('shTitle', rankOf(g.score))];
+  if (g.rank) lines.splice(2, 0, t('shRank', g.rank, g.rankTotal));
+  if (mode === 'free') { if (SHARE_URL) lines.push(t('shTry', SHARE_URL)); }
+  else if (SHARE_URL) lines.push(t('shBeat', `${SHARE_URL}#vs-${g.score}-${g.date}`));
+  else lines.push(t('shCode', `vs-${g.score}-${g.date}`));
+  return lines.join('\n');
+}
+function share() {
+  const text = shareText(game);
+  const fallback = () => { const ta = $('o-text'); ta.hidden = false; ta.value = text; ta.focus(); ta.select(); toast(t('copyManual')); };
+  const copy = () => {
+    try { navigator.clipboard.writeText(text).then(() => toast(t('copied')), fallback); }
+    catch (e) { fallback(); }
+  };
+  if (NATIVE) { try { NATIVE.postMessage({ type: 'share', text }); return; } catch (e) {} }
+  // Trên web thật (không nằm trong khung nhúng) thì mở bảng chia sẻ của điện thoại
+  let top = false; try { top = window.top === window.self; } catch (e) {}
+  if (top && navigator.share && matchMedia('(pointer: coarse)').matches) { navigator.share({ text }).catch(err => { if (!err || err.name !== 'AbortError') copy(); }); return; }
+  copy();
+}
+
+let toastT = 0;
+function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2600); }
+let bannerT = 0;
+function banner(msg) { const b = $('banner'); b.textContent = msg; b.classList.add('show'); clearTimeout(bannerT); bannerT = setTimeout(() => b.classList.remove('show'), 1400); }
+
+const ICON_ON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/><path d="M19 6a8.5 8.5 0 0 1 0 12"/></svg>';
+const ICON_OFF = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M17 9l5 6M22 9l-5 6"/></svg>';
+function renderMute() { $('b-mute2').innerHTML = muted ? ICON_OFF : ICON_ON; $('b-mute').textContent = t('sound', !muted); }
+function toggleMute() { muted = !muted; store.set('qd-mute', muted); renderMute(); if (!muted) audio(); }
+
+/* ---------- leaderboard ---------- */
+// Khi game bị nhúng trong khung của trang khác (ví dụ bản xem trên claude.ai) thì khung đó chặn kết nối ra ngoài → tắt bảng xếp hạng ở đó
+let IS_TOP = false; try { IS_TOP = window.top === window.self; } catch (e) {}
+const LB_ON = !!(SB_URL && SB_KEY) && IS_TOP;
+function rpc(fn, args) {
+  const ctl = typeof AbortController === 'function' ? new AbortController() : null;
+  const timer = setTimeout(() => ctl && ctl.abort(), 9000);
+  return fetch(`${SB_URL}/rest/v1/rpc/${fn}`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json', apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY },
+    body: JSON.stringify(args), signal: ctl ? ctl.signal : undefined
+  }).then(r => r.json().catch(() => null).then(j => {
+    if (!r.ok) { const e = new Error((j && j.message) || 'Máy chủ báo lỗi'); e.server = r.status >= 400 && r.status < 500; e.code = j && j.code; throw e; }
+    return j;
+  })).finally(() => clearTimeout(timer));
+}
+// Mã người chơi: sinh ngẫu nhiên một lần trên máy này, không gắn với thông tin cá nhân nào
+function playerId() {
+  let id = store.get('qd-pid', '');
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(id)) {
+    id = (window.crypto && crypto.randomUUID) ? crypto.randomUUID()
+      : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => { const r = Math.random() * 16 | 0; return (c === 'x' ? r : (r & 3 | 8)).toString(16); });
+    store.set('qd-pid', id);
+  }
+  return id;
+}
+const cleanName = s => String(s || '').replace(/[\u0000-\u001f<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, 16);
+const getName = () => cleanName(store.get('qd-name', ''));
+const ydayOf = () => ymdVN(Date.now() - DAY_MS);
+function linkBtn(label, fn) { const b = document.createElement('button'); b.type = 'button'; b.className = 'link'; b.textContent = label; b.addEventListener('click', fn); return b; }
+
+let lastRank = null;   // hạng hôm nay mới nhất mà máy chủ trả về: {rank, total}
+// Gửi điểm cao nhất trong ngày của máy này (máy chủ cũng chỉ giữ điểm cao nhất)
+function submitBest(g) {
+  const d = getDaily();
+  const useRun = g && (d.bestPlanets == null || g.score >= d.best);
+  const score = useRun ? g.score : d.best, planets = useRun ? g.maxIdx : d.bestPlanets, streak = useRun ? g.bestStreak : (d.bestStreak || 0);
+  return rpc('submit_score', { p_day: TODAY, p_player: playerId(), p_name: getName(), p_score: score, p_planets: planets, p_streak: streak })
+    .then(b => { if (b && b.me) lastRank = { rank: Number(b.me.rank), total: Number(b.total) }; return b; });
+}
+function showRankBox(g) {
+  const box = $('o-rankbox'), form = $('o-nameform');
+  if (!LB_ON || mode !== 'daily') { box.hidden = true; return; }
+  box.hidden = false;
+  if (!getName()) { form.hidden = false; $('o-rules').hidden = false; $('o-rankmsg').textContent = t('lbNeedName'); return; }
+  form.hidden = true; $('o-rules').hidden = true;
+  sendRun(g);
+}
+function sendRun(g) {
+  const msg = $('o-rankmsg');
+  msg.textContent = t('lbSending');
+  submitBest(g).then(b => {
+    if (game !== g) return;                     // người chơi đã sang ván khác
+    if (!b || !b.me) { msg.textContent = t('lbSent'); return; }
+    g.rank = Number(b.me.rank); g.rankTotal = Number(b.total);
+    msg.innerHTML = t('lbRank', g.rank, g.rankTotal) + (Number(b.me.score) > g.score ? t('lbYourBest', Number(b.me.score)) : '');
+  }).catch(err => {
+    if (game !== g) return;
+    if (err && err.code === 'QD001') {          // tên không được phép: bỏ tên đó, cho nhập lại
+      store.set('qd-name', ''); msg.textContent = t('nameBad');
+      $('o-nameform').hidden = false; $('o-rules').hidden = false; $('name-input').value = ''; $('name-input').focus();
+      return;
+    }
+    // lời báo lỗi của máy chủ viết bằng tiếng Việt, nên chỉ hiện nguyên văn khi đang ở tiếng Việt
+    msg.textContent = err && err.server ? (lang === 'vi' ? err.message + '. ' : t('lbRejected')) : t('lbSendFail');
+    msg.append(linkBtn(t('retryLink'), () => sendRun(g)));
+  });
+}
+
+let boardOpen = false, boardTab = 'today', boardReq = 0;
+function openBoard(tab) {
+  boardOpen = true; $('board').hidden = false; $('bd-nameform').hidden = true;
+  boardFoot(); setTab(tab || 'today');
+  $('b-board-close').focus({ preventScroll: true });
+}
+function closeBoard() { boardOpen = false; $('board').hidden = true; }
+function boardFoot() { const n = getName(); $('bd-name').textContent = n ? t('yourName', n) : t('noName'); $('b-rename').textContent = n ? t('rename') : t('setName'); }
+function setTab(tab) {
+  boardTab = tab;
+  for (const b of document.querySelectorAll('#board [role=tab]')) b.setAttribute('aria-selected', b.dataset.tab === tab ? 'true' : 'false');
+  loadBoard();
+}
+function rowEl(tag, r, isMe) {
+  const el = document.createElement(tag);
+  if (isMe) el.classList.add('me');
+  const rk = document.createElement('span'); rk.className = 'rk' + (r.rank <= 3 ? ' r' + r.rank : ''); rk.textContent = r.rank;
+  const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = r.name + (isMe ? t('you') : '');   // textContent: tên do người chơi nhập
+  const sm = document.createElement('small'); sm.textContent = t('rowPlanets', Number(r.planets)) + (r.day ? t('rowDay', fmtDate(Number(r.day))) : ''); nm.append(sm);
+  const sc = document.createElement('span'); sc.className = 'sc'; sc.textContent = Number(r.score);
+  el.append(rk, nm, sc);
+  if (!isMe && r.key && tag === 'li') {
+    const more = document.createElement('button'); more.type = 'button'; more.className = 'row-more'; more.setAttribute('aria-label', t('rowMore', r.name));
+    more.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>';
+    more.addEventListener('click', () => openSheet(r));
+    el.append(more);
+  }
+  return el;
+}
+// Báo cáo và ẩn người chơi. Danh sách ẩn lưu trên máy này; báo cáo gửi lên máy chủ (đủ 3 báo cáo thì tên tự ẩn với mọi người).
+const getBlocked = () => { const b = store.get('qd-blocked', []); return Array.isArray(b) ? b : []; };
+let sheetRow = null;
+function openSheet(r) { sheetRow = r; $('sh-name').textContent = r.name; $('bd-sheet').hidden = false; $('sh-report').focus({ preventScroll: true }); $('bd-sheet').scrollIntoView({ block: 'nearest' }); }
+function closeSheet() { sheetRow = null; $('bd-sheet').hidden = true; }
+function blockKey(key) { const b = getBlocked(); if (!b.includes(key)) { b.push(key); store.set('qd-blocked', b.slice(-200)); } }
+function loadBoard() {
+  const req = ++boardReq, rows = $('bd-rows'), st = $('bd-state'), me = $('bd-me'), sub = $('bd-sub');
+  const head = boardTab === 'today' ? t('bdToday', dayNo(TODAY), fmtDate(TODAY)) : boardTab === 'yday' ? t('bdYday', fmtDate(ydayOf())) : t('bdAll');
+  rows.textContent = ''; me.hidden = true; st.hidden = false; st.textContent = t('loading'); sub.textContent = head;
+  $('bd-hidden').hidden = true; closeSheet();
+  const p = boardTab === 'all' ? rpc('hall_of_fame', { p_player: playerId(), p_limit: 20 })
+    : rpc('leaderboard', { p_day: boardTab === 'today' ? TODAY : ydayOf(), p_player: playerId(), p_limit: 20 });
+  p.then(b => {
+    if (req !== boardReq) return;
+    const top = (b && b.top) || [];
+    if (boardTab === 'today' && b && b.me) { lastRank = { rank: Number(b.me.rank), total: Number(b.total) }; menuRank(); }
+    if (!top.length) { st.textContent = boardTab === 'today' ? t('bdEmptyToday') : t('bdEmpty'); return; }
+    st.hidden = true;
+    sub.textContent = head + t('bdPlayers', Number(b.total));
+    const blocked = getBlocked(), shown = top.filter(r => r.me || !blocked.includes(r.key)), nHidden = top.length - shown.length;
+    for (const r of shown) rows.append(rowEl('li', r, !!r.me));
+    const hid = $('bd-hidden'); hid.hidden = !nHidden;
+    if (nHidden) { hid.textContent = t('hiddenCount', nHidden); hid.append(linkBtn(t('showAll'), () => { store.set('qd-blocked', []); loadBoard(); })); }
+    if (b.me && !top.some(r => r.me)) { me.replaceChildren(...rowEl('div', b.me, true).childNodes); me.hidden = false; }
+  }).catch(() => {
+    if (req !== boardReq) return;
+    st.hidden = false; st.textContent = t('bdFail');
+    st.append(linkBtn(t('retryLink'), loadBoard));
+  });
+}
+function menuRank() { $('m-rank').textContent = lastRank ? t('rankShort', lastRank.rank, lastRank.total) : t('boardSub'); }
+function saveName(input) {
+  const n = cleanName(input.value);
+  if (n.length < 2) { toast(t('nameShort')); input.focus(); return false; }
+  store.set('qd-name', n); input.blur();
+  return true;
+}
+if (LB_ON) {
+  $('b-board').hidden = false;
+  $('b-board').addEventListener('click', () => openBoard('today'));
+  $('b-board2').addEventListener('click', () => openBoard('today'));
+  $('b-board-close').addEventListener('click', closeBoard);
+  $('board').addEventListener('click', e => { if (e.target === $('board')) closeBoard(); });
+  for (const b of document.querySelectorAll('#board [role=tab]')) b.addEventListener('click', () => setTab(b.dataset.tab));
+  $('sh-cancel').addEventListener('click', closeSheet);
+  $('sh-hide').addEventListener('click', () => { if (!sheetRow) return; blockKey(sheetRow.key); toast(t('hiddenOne')); loadBoard(); });
+  $('sh-report').addEventListener('click', () => {
+    if (!sheetRow) return;
+    const key = sheetRow.key;
+    rpc('report_name', { p_key: key, p_reporter: playerId() })
+      .then(() => { blockKey(key); toast(t('reported')); loadBoard(); })      // người báo cáo cũng không còn thấy tên đó nữa
+      .catch(() => toast(t('reportFail')));
+  });
+  $('o-nameform').addEventListener('submit', e => { e.preventDefault(); if (saveName($('name-input'))) { $('o-nameform').hidden = true; $('o-rules').hidden = true; if (game) sendRun(game); } });
+  $('b-rename').addEventListener('click', () => { const f = $('bd-nameform'); f.hidden = !f.hidden; if (!f.hidden) { $('rename-input').value = getName(); $('rename-input').focus(); } });
+  $('bd-nameform').addEventListener('submit', e => {
+    e.preventDefault();
+    const before = getName();
+    if (!saveName($('rename-input'))) return;
+    $('bd-nameform').hidden = true; boardFoot();
+    const d = getDaily();
+    // đã có điểm hôm nay thì gửi lại để tên mới hiện trên bảng
+    if (d.runs.length && d.bestPlanets != null) submitBest(null).then(() => { if (boardOpen) loadBoard(); if (state === 'over' && game && mode === 'daily') showRankBox(game); }).catch(err => {
+      if (err && err.code === 'QD001') { store.set('qd-name', before); boardFoot(); $('bd-nameform').hidden = false; toast(t('nameBad')); }
+      else toast(t('nameSavedNoSync'));
+    });
+    else toast(t('nameSaved'));
+  });
+} else $('m-row').style.gridTemplateColumns = '1fr';
+
+/* ---------- input ---------- */
+cv.addEventListener('pointerdown', e => { e.preventDefault(); if (state === 'play' && game) { audio(); launch(game); } });
+window.addEventListener('keydown', e => {
+  const tg = e.target && e.target.tagName;
+  if (tg === 'INPUT' || tg === 'TEXTAREA') return;            // đang gõ tên thì không điều khiển game
+  if (boardOpen) { if (e.code === 'Escape') closeBoard(); return; }
+  if (e.code === 'Space' || e.code === 'Enter' || e.code === 'ArrowUp') {
+    if (state === 'play' && game) { e.preventDefault(); audio(); launch(game); }
+    else if (state === 'over' && e.code === 'Space') { e.preventDefault(); $('b-retry').click(); }
+  } else if (e.code === 'Escape' && state !== 'menu') goMenu();
+  else if (e.code === 'KeyM') toggleMute();
+});
+function goMenu() { state = 'menu'; $('over').hidden = true; $('hud').hidden = true; $('menu').hidden = false; refreshMenu(); }
+// Nút Back của Android gọi hàm này. Trả về true nếu game đã tự xử lý (đóng bảng, về menu); false thì app thoát xuống nền.
+window.qdBack = () => {
+  if (boardOpen) { if (!$('bd-sheet').hidden) closeSheet(); else closeBoard(); return true; }
+  if (state !== 'menu') { goMenu(); return true; }
+  return false;
+};
+$('b-daily').addEventListener('click', () => startRun('daily'));
+$('b-free').addEventListener('click', () => startRun('free'));
+$('b-challenge').addEventListener('click', acceptChallenge);
+$('b-retry').addEventListener('click', () => startRun(mode === 'daily' && getDaily().used >= DAILY_TRIES ? 'free' : mode));
+$('b-share').addEventListener('click', share);
+$('b-menu').addEventListener('click', goMenu);
+$('b-mute').addEventListener('click', toggleMute);
+$('b-mute2').addEventListener('click', toggleMute);
+$('l-en').addEventListener('click', () => setLang('en'));
+$('l-vi').addEventListener('click', () => setLang('vi'));
+window.addEventListener('resize', resize);
+
+/* ---------- boot ---------- */
+resize();
+applyLang();
+attract = newRun(randSeed(), { auto: true });
+let last = performance.now();
+function frame(now) {
+  const dt = Math.min(0.033, (now - last) / 1000); last = now;
+  const g = state === 'menu' ? attract : game;
+  requestAnimationFrame(frame);
+  if (g) { update(g, dt); draw(g); }
+}
+requestAnimationFrame(frame);
+window.__qd = {
+  get game() { return game; }, get attract() { return attract; }, launch: () => game && launch(game),
+  // kết xuất tiếng nổ ra bộ đệm (không phát ra loa) để đo: đỉnh, độ to theo thời gian, độ "sáng" đầu và cuối
+  renderBoom(kind) {
+    const saved = [ac, master, nbuf, echoIn, muted];
+    const off = new OfflineAudioContext(1, 44100 * 2, 44100);
+    ac = off; nbuf = null; muted = false; wireAudio(); boom(kind);
+    [ac, master, nbuf, echoIn, muted] = saved;
+    return off.startRendering().then(buf => {
+      const d = buf.getChannelData(0), win = 4410, rms = [], zc = [];
+      let peak = 0;
+      for (let i = 0; i < d.length; i += win) {
+        let e = 0, z = 0;
+        for (let j = i; j < i + win && j < d.length; j++) { e += d[j] * d[j]; if (j > i && (d[j] >= 0) !== (d[j - 1] >= 0)) z++; peak = Math.max(peak, Math.abs(d[j])); }
+        rms.push(+(10 * Math.log10(e / win + 1e-12)).toFixed(1)); zc.push(z);
+      }
+      return { peak: +peak.toFixed(3), rmsDbPer100ms: rms, zeroCrossPer100ms: zc };
+    });
+  },
+  // đo số giây (thời gian trong game) được đứng yên ở hành tinh thứ idx trước khi rơi
+  lifeTest(seed, idx) {
+    const g = newRun(seed, { auto: true }); g.cam = 0; let steps = 0;
+    while (!g.over && !(g.comet.state === 'orbit' && g.comet.p >= idx) && steps < 3e6) { update(g, 1 / 600); steps++; }
+    if (g.over) return null;
+    g.auto = false; const p = g.comet.p, T0 = g.T - g.comet.t;
+    while (!g.over && steps < 6e6) { update(g, 1 / 600); steps++; }
+    g.shown = true;
+    return { planet: p, kind: g.planets[p].kind, seconds: +(g.T - T0).toFixed(1) };
+  },
+  // mô phỏng người chơi "hoàn hảo" để kiểm tra bản đồ có công bằng không (không ảnh hưởng game đang chạy)
+  sim(seed, upto = 60) {
+    const g = newRun(seed, { auto: true }); g.cam = 0; let steps = 0;
+    while (!g.over && g.maxIdx < upto && steps < 3e6) { update(g, 1 / 600); steps++; }
+    const kinds = {}; for (const p of g.planets.slice(0, g.maxIdx + 1)) kinds[p.kind] = (kinds[p.kind] || 0) + 1;
+    const nx = g.planets[g.comet.from + 1];
+    return { idx: g.maxIdx, death: g.death, at: g.over ? g.planets[g.comet.p].kind : '', missedMoving: g.over ? +(nx.amp * nx.f).toFixed(1) : 0, score: g.score, kinds, worms: g.worms.length, secs: Math.round(g.T) };
+  }
+};
+})();
+</script>
+</body>
+</html>

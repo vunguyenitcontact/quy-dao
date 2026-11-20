@@ -1,0 +1,6 @@
+app.quydao.game
+color space
+mipmap ic_launcher
+mipmap ic_launcher_art
+string app_name
+style Theme_OrbitHop

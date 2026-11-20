@@ -1,0 +1,65 @@
+1<?xml version="1.0" encoding="utf-8"?>
+2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+3    package="app.quydao.game"
+4    android:versionCode="1"
+5    android:versionName="1.0" >
+6
+7    <uses-sdk
+7-->INJECTED
+8        android:minSdkVersion="24"
+8-->INJECTED
+9        android:targetSdkVersion="36" />
+9-->INJECTED
+10
+11    <!-- Chỉ dùng mạng cho bảng xếp hạng và phông chữ; game chạy được khi không có mạng. -->
+12    <uses-permission android:name="android.permission.INTERNET" />
+12-->/Volumes/Kingston SNV2S200G/Videcode/quy-dao/android/app/src/main/AndroidManifest.xml:5:5-67
+12-->/Volumes/Kingston SNV2S200G/Videcode/quy-dao/android/app/src/main/AndroidManifest.xml:5:22-64
+13
+14    <application
+14-->/Volumes/Kingston SNV2S200G/Videcode/quy-dao/android/app/src/main/AndroidManifest.xml:7:5-27:19
+15        android:allowBackup="true"
+15-->/Volumes/Kingston SNV2S200G/Videcode/quy-dao/android/app/src/main/AndroidManifest.xml:8:9-35
+16        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
+16-->[androidx.core:core:1.1.0] /Users/vxnguyen/.gradle/caches/9.8.2/transforms/ff441bf1b27f9fd0a27036a988c23f55/transformed/core-1.1.0/AndroidManifest.xml:24:18-86
+17        android:debuggable="true"
+18        android:extractNativeLibs="false"
+18-->INJECTED
+19        android:icon="@mipmap/ic_launcher"
+19-->/Volumes/Kingston SNV2S200G/Videcode/quy-dao/android/app/src/main/AndroidManifest.xml:9:9-43
+20        android:label="@string/app_name"
+20-->/Volumes/Kingston SNV2S200G/Videcode/quy-dao/android/app/src/main/AndroidManifest.xml:11:9-41
+21        android:roundIcon="@mipmap/ic_launcher"
+21-->/Volumes/Kingston SNV2S200G/Videcode/quy-dao/android/app/src/main/AndroidManifest.xml:10:9-48
+22        android:supportsRtl="true"
+22-->/Volumes/Kingston SNV2S200G/Videcode/quy-dao/android/app/src/main/AndroidManifest.xml:12:9-35
+23        android:theme="@style/Theme.OrbitHop" >
+23-->/Volumes/Kingston SNV2S200G/Videcode/quy-dao/android/app/src/main/AndroidManifest.xml:13:9-46
+24        <activity
+24-->/Volumes/Kingston SNV2S200G/Videcode/quy-dao/android/app/src/main/AndroidManifest.xml:15:9-26:20
+25            android:name="app.quydao.game.MainActivity"
+25-->/Volumes/Kingston SNV2S200G/Videcode/quy-dao/android/app/src/main/AndroidManifest.xml:16:13-41
+26            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|keyboard|smallestScreenSize|uiMode|density"
+26-->/Volumes/Kingston SNV2S200G/Videcode/quy-dao/android/app/src/main/AndroidManifest.xml:19:13-130
+27            android:exported="true"
+27-->/Volumes/Kingston SNV2S200G/Videcode/quy-dao/android/app/src/main/AndroidManifest.xml:17:13-36
+28            android:launchMode="singleTask"
+28-->/Volumes/Kingston SNV2S200G/Videcode/quy-dao/android/app/src/main/AndroidManifest.xml:20:13-44
+29            android:screenOrientation="portrait"
+29-->/Volumes/Kingston SNV2S200G/Videcode/quy-dao/android/app/src/main/AndroidManifest.xml:18:13-49
+30            android:windowSoftInputMode="adjustResize" >
+30-->/Volumes/Kingston SNV2S200G/Videcode/quy-dao/android/app/src/main/AndroidManifest.xml:21:13-55
+31            <intent-filter>
+31-->/Volumes/Kingston SNV2S200G/Videcode/quy-dao/android/app/src/main/AndroidManifest.xml:22:13-25:29
+32                <action android:name="android.intent.action.MAIN" />
+32-->/Volumes/Kingston SNV2S200G/Videcode/quy-dao/android/app/src/main/AndroidManifest.xml:23:17-69
+32-->/Volumes/Kingston SNV2S200G/Videcode/quy-dao/android/app/src/main/AndroidManifest.xml:23:25-66
+33
+34                <category android:name="android.intent.category.LAUNCHER" />
+34-->/Volumes/Kingston SNV2S200G/Videcode/quy-dao/android/app/src/main/AndroidManifest.xml:24:17-77
+34-->/Volumes/Kingston SNV2S200G/Videcode/quy-dao/android/app/src/main/AndroidManifest.xml:24:27-74
+35            </intent-filter>
+36        </activity>
+37    </application>
+38
+39</manifest>

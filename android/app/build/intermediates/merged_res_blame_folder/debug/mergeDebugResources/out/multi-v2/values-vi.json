@@ -1,0 +1,36 @@
+{
+    "logs": [
+        {
+            "outputFile": "app.quydao.game.app-mergeDebugResources-4:/values-vi/values-vi.xml",
+            "map": [
+                {
+                    "source": "/Users/vxnguyen/.gradle/caches/9.8.2/transforms/ff441bf1b27f9fd0a27036a988c23f55/transformed/core-1.1.0/res/values-vi/values-vi.xml",
+                    "from": {
+                        "startLines": "2",
+                        "startColumns": "4",
+                        "startOffsets": "55",
+                        "endColumns": "100",
+                        "endOffsets": "151"
+                    },
+                    "to": {
+                        "startLines": "3",
+                        "startColumns": "4",
+                        "startOffsets": "100",
+                        "endColumns": "100",
+                        "endOffsets": "196"
+                    }
+                },
+                {
+                    "source": "/Volumes/Kingston SNV2S200G/Videcode/quy-dao/android/app/src/main/res/values-vi/strings.xml",
+                    "from": {
+                        "startLines": "2",
+                        "startColumns": "4",
+                        "startOffsets": "55",
+                        "endColumns": "44",
+                        "endOffsets": "95"
+                    }
+                }
+            ]
+        }
+    ]
+}

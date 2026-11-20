@@ -1,0 +1,46 @@
+[
+    {
+        "merged": "app.quydao.game.app-debug-6:/mipmap-xhdpi_ic_launcher.png.flat",
+        "source": "app.quydao.game.app-main-8:/mipmap-xhdpi/ic_launcher.png"
+    },
+    {
+        "merged": "app.quydao.game.app-debug-6:/mipmap-xxxhdpi_ic_launcher_art.png.flat",
+        "source": "app.quydao.game.app-main-8:/mipmap-xxxhdpi/ic_launcher_art.png"
+    },
+    {
+        "merged": "app.quydao.game.app-debug-6:/mipmap-mdpi_ic_launcher_art.png.flat",
+        "source": "app.quydao.game.app-main-8:/mipmap-mdpi/ic_launcher_art.png"
+    },
+    {
+        "merged": "app.quydao.game.app-debug-6:/mipmap-hdpi_ic_launcher.png.flat",
+        "source": "app.quydao.game.app-main-8:/mipmap-hdpi/ic_launcher.png"
+    },
+    {
+        "merged": "app.quydao.game.app-debug-6:/mipmap-xxxhdpi_ic_launcher.png.flat",
+        "source": "app.quydao.game.app-main-8:/mipmap-xxxhdpi/ic_launcher.png"
+    },
+    {
+        "merged": "app.quydao.game.app-debug-6:/mipmap-xxhdpi_ic_launcher_art.png.flat",
+        "source": "app.quydao.game.app-main-8:/mipmap-xxhdpi/ic_launcher_art.png"
+    },
+    {
+        "merged": "app.quydao.game.app-debug-6:/mipmap-xhdpi_ic_launcher_art.png.flat",
+        "source": "app.quydao.game.app-main-8:/mipmap-xhdpi/ic_launcher_art.png"
+    },
+    {
+        "merged": "app.quydao.game.app-debug-6:/mipmap-hdpi_ic_launcher_art.png.flat",
+        "source": "app.quydao.game.app-main-8:/mipmap-hdpi/ic_launcher_art.png"
+    },
+    {
+        "merged": "app.quydao.game.app-debug-6:/mipmap-anydpi-v26_ic_launcher.xml.flat",
+        "source": "app.quydao.game.app-main-8:/mipmap-anydpi-v26/ic_launcher.xml"
+    },
+    {
+        "merged": "app.quydao.game.app-debug-6:/mipmap-xxhdpi_ic_launcher.png.flat",
+        "source": "app.quydao.game.app-main-8:/mipmap-xxhdpi/ic_launcher.png"
+    },
+    {
+        "merged": "app.quydao.game.app-debug-6:/mipmap-mdpi_ic_launcher.png.flat",
+        "source": "app.quydao.game.app-main-8:/mipmap-mdpi/ic_launcher.png"
+    }
+]

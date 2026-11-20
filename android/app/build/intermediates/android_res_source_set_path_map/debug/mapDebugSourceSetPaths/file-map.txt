@@ -1,0 +1,8 @@
+app.quydao.game.app-pngs-0 /Volumes/Kingston SNV2S200G/Videcode/quy-dao/android/app/build/generated/res/pngs/debug
+app.quydao.game.app-updated_navigation_xml-1 /Volumes/Kingston SNV2S200G/Videcode/quy-dao/android/app/build/generated/updated_navigation_xml/debug
+app.quydao.game.app-packageDebugResources-2 /Volumes/Kingston SNV2S200G/Videcode/quy-dao/android/app/build/intermediates/incremental/debug/packageDebugResources/merged.dir
+app.quydao.game.app-packageDebugResources-3 /Volumes/Kingston SNV2S200G/Videcode/quy-dao/android/app/build/intermediates/incremental/debug/packageDebugResources/stripped.dir
+app.quydao.game.app-debug-4 /Volumes/Kingston SNV2S200G/Videcode/quy-dao/android/app/build/intermediates/merged_res/debug/mergeDebugResources
+app.quydao.game.app-debug-5 /Volumes/Kingston SNV2S200G/Videcode/quy-dao/android/app/src/debug/res
+app.quydao.game.app-main-6 /Volumes/Kingston SNV2S200G/Videcode/quy-dao/android/app/src/main/res
+gradleHome-0 /Users/vxnguyen/.gradle
